@@ -121,10 +121,11 @@ use avian_fdm::{
     sourced,
 };
 use avian3d::{
+    dynamics::rigid_body::LinearVelocity,
     math::{Scalar, Vector},
     prelude::{Collider, ColliderDensity, RigidBody},
 };
-use bevy::prelude::*;
+use bevy::{math::DVec3, prelude::*};
 use big_space::prelude::*;
 use std::f32::consts::FRAC_PI_2;
 
@@ -458,6 +459,7 @@ pub fn spawn(
     transform: Transform,
     asset_server: Res<AssetServer>,
     abs_pos: bevy::math::DVec3,
+    initial_velocity: Scalar,
     cell: CellCoord,
     parent_id: Entity,
     rotation: avian3d::prelude::Rotation,
@@ -467,7 +469,7 @@ pub fn spawn(
         .spawn((
             cell,
             Visibility::default(),
-            j3cub_core_bundle(transform),
+            j3cub_core_bundle(transform,rotation * DVec3::X * initial_velocity),
             // Lift-induced drag: J3Cub has a high-wing strut-braced layout.
             // e = 0.94 from JSBSim: CD_i = CL² × 0.0485, so e = 1/(π × 0.0485 × AR=6.956)
             InducedDrag {
@@ -793,7 +795,7 @@ pub fn spawn(
 /// Pair with [`InducedDrag`] (already included by [`spawn`]) for lift-induced
 /// drag.  No [`LodDamping`](avian_fdm::components::LodDamping). Roll/pitch/yaw
 /// damping emerges from per-zone local α/β physics.
-pub fn j3cub_core_bundle(transform: Transform) -> impl Bundle {
+pub fn j3cub_core_bundle(transform: Transform, initial_velocity: DVec3) -> impl Bundle {
     (AircraftCoreBundle {
         geometry: AircraftGeometry {
             wing_area_m2: WING_AREA_M2,
@@ -802,6 +804,7 @@ pub fn j3cub_core_bundle(transform: Transform) -> impl Bundle {
         },
         rigid_body: RigidBody::Dynamic,
         transform,
+        linear_velocity: LinearVelocity(initial_velocity),
         ..Default::default()
     },)
 }

@@ -250,6 +250,7 @@ pub fn spawn_j3cub(
         Transform::from_translation(object_pos).with_rotation(level.as_quat()),
         asset_server,
         translation,
+        30.0,
         object_cell,
         root_grid_id,
         Rotation(level),
