@@ -171,7 +171,7 @@ pub fn spawn_breeze(
 ) {
     let (root_grid_id, grid) = *root_grid;
 
-    *state = AircraftState::default(); // Reset aricraft state
+    *state = AircraftState::default(); // Reset aircraft state
     state.aircraft_type = AircraftTypes::Breeze;
     state.engine.on = true;
     state.lights.landing = true;
@@ -218,7 +218,7 @@ pub fn spawn_j3cub(
     root_grid: Single<(Entity, &Grid), With<BigSpace>>,
     settings: Res<Settings>,
 ) {
-    *state = AircraftState::default(); // Reset aricraft state
+    *state = AircraftState::default(); // Reset aircraft state
     state.aircraft_type = AircraftTypes::J3Cub;
     state.engine.on = true;
 
@@ -263,7 +263,7 @@ pub fn spawn_helicopter(
     root_grid: Single<(Entity, &Grid), With<BigSpace>>,
     settings: Res<Settings>,
 ) {
-    *state = AircraftState::default(); // Reset aricraft state
+    *state = AircraftState::default(); // Reset aircraft state
     state.aircraft_type = AircraftTypes::Helicopter;
     let (root_grid_id, grid) = *root_grid;
 
