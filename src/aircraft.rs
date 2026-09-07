@@ -1,12 +1,11 @@
-pub mod animations;
-pub mod buttons;
-pub mod lights;
-pub mod screens;
-
 pub mod airfoils;
+pub mod animations;
 pub mod breeze;
+pub mod buttons;
 mod helicopter;
 mod j3cub;
+pub mod lights;
+pub mod screens;
 
 use crate::{
     EARTH_RADIUS, GameState, Settings, aircraft,
