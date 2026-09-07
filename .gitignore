@@ -1,6 +1,7 @@
 .direnv
 .envrc
 shell.nix
+flake.lock
 /target
 .user/*
 !.user/cache/
