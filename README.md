@@ -21,9 +21,9 @@ It is still in early development, but it's getting somewhere...
 
 ## Preview
 
-![(kestrel flight simulator: preview 1)](./docs/preview-1.png)
-![(kestrel flight simulator: preview 2)](./docs/preview-2.png)
-![(kestrel flight simulator: preview 3)](./docs/preview-3.png)
+![(Kestrel Flight Simulator: Preview 1)](./docs/preview-1.png)
+![(Kestrel Flight Simulator: Preview 2)](./docs/preview-2.png)
+![(Kestrel Flight Simulator: Preview 3)](./docs/preview-3.png)
 
 ## Community
 
@@ -38,20 +38,11 @@ It is still in early development, but it's getting somewhere...
 
 ### Installation steps
 
-1. Clone the repository
+Download the archive from [here](https://github.com/wesfly/kestrel/releases),
+unzip it, and run the precompiled executable.
 
-   ```bash
-   git clone https://github.com/wesfly/kestrel.git && cd kestrel
-   ```
-
-2. Build and run the project
-
-   ```bash
-   cargo run --release
-   ```
-
-   This will build and launch `kestrel`. The first startup fetches terrain data
-   and may take some time (see below).
+If you want to compile this project yourself, make sure you have `git-lfs` installed to
+get all 3D files and textures.
 
 ## Terrain
 
