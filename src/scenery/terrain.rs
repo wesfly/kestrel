@@ -1,4 +1,4 @@
-use crate::{EARTH_RADIUS, absolute_position};
+use crate::{EARTH_RADIUS, TOKIO_RUNTIME, absolute_position};
 use avian3d::prelude::*;
 use bevy::{
     asset::RenderAssetUsages,
@@ -16,7 +16,6 @@ use bevy::{
 use big_space::prelude::*;
 use dashmap::DashMap;
 pub use material::TerrainMaterial;
-use once_cell::sync::Lazy;
 use reqwest::Client;
 use serde::Deserialize;
 use std::fs::File;
@@ -28,7 +27,6 @@ use std::{
     sync::Arc,
     time::{Duration, Instant},
 };
-use tokio::runtime::Runtime;
 use tokio::sync::{OnceCell, Semaphore};
 
 mod material;
@@ -425,7 +423,12 @@ pub fn update_terrain(
         let splitting_into_children = key.children().iter().any(|c| desired.contains(c));
 
         let ready = if merging_into_parent {
-            live.contains_key(&key.parent().unwrap())
+            if let Some(parent_key) = &key.parent() {
+                warn!("{key:?} has no parent");
+                live.contains_key(&parent_key)
+            } else {
+                false
+            }
         } else if splitting_into_children {
             key.children().iter().all(|c| live.contains_key(c))
         } else {
@@ -505,7 +508,7 @@ fn spawn_leaf(
         Arc::clone(cache),
     ));
 
-    let task = thread_pool.spawn(async move { tokio_handle.await.unwrap() });
+    let task = thread_pool.spawn(async move { tokio_handle.await.unwrap_or_default() });
     let (cell_coord, cell_offset) = grid.translation_to_grid(projected_chunk_center);
     commands.spawn(SpawnTerrain {
         task,
@@ -795,9 +798,6 @@ pub fn get_height_at_coord(coord: Coord, zoom: u8, cache: &TileCache) -> f32 {
         _ => 0.0,
     }
 }
-
-static TOKIO_RUNTIME: Lazy<Runtime> =
-    Lazy::new(|| Runtime::new().expect("Failed to create tokio runtime"));
 
 // This plane mesh generation algorithm is based on the bevy Plane3d mesh generator
 async fn build_mesh(

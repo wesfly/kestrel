@@ -70,7 +70,7 @@ pub fn setup_scene(
                 coord.long + 0.05,
             ));
 
-            let task = thread_pool.spawn(async move { tokio_handle.await.unwrap() });
+            let task = thread_pool.spawn(async move { tokio_handle.await.unwrap_or_default() });
             root.spawn(SpawnBuilding { task });
         }
     });

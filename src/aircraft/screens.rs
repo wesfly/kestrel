@@ -40,6 +40,7 @@ pub fn on_add_use_screen_material(
     mut world: DeferredWorld,
     HookContext { entity, .. }: HookContext,
 ) {
+    #[allow(clippy::expect_used)]
     let screens = *world
         .get::<Screens>(entity)
         .expect("on_add_use_screen_material requires a Screens component");

@@ -179,9 +179,10 @@ impl Button {
                         true => -SWITCH_ANGLE_LIMIT,
                         false => SWITCH_ANGLE_LIMIT,
                     };
-
-                    if *interface_op == *button.operation.as_ref().unwrap() {
-                        transform.rotate_local_x(angle.to_radians());
+                    if let Some(op) = &button.operation {
+                        if *interface_op == *op {
+                            transform.rotate_local_x(angle.to_radians());
+                        }
                     }
                 }
             }

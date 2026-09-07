@@ -67,8 +67,10 @@ pub struct MaterialStore {
     lights: StandardMaterial,
 }
 
-pub static TOKIO_RUNTIME: Lazy<Runtime> =
-    Lazy::new(|| Runtime::new().expect("Failed to create tokio runtime"));
+pub static TOKIO_RUNTIME: Lazy<Runtime> = Lazy::new(|| {
+    #[allow(clippy::expect_used)]
+    Runtime::new().expect("runtime to be created without errors. If you see this error, try again.")
+});
 
 pub fn bevy_to_aerospace_coords() -> Quat {
     Quat::from_mat3(&Mat3::from_cols(Vec3::Y, -Vec3::Z, -Vec3::X))

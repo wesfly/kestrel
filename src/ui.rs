@@ -301,22 +301,24 @@ fn fly_button() -> impl Scene {
                 return;
             }
 
-            if location_selector.is_some() {
-                settings.terrain.coord = location_selector.unwrap().0;
+            if let Some(loc_sel) = location_selector {
+                settings.terrain.coord = loc_sel.0;
             }
 
             messages.write(UIMessage::SpawnScenery);
             messages.write(UIMessage::DespawnMenu);
             messages.write(UIMessage::SpawnUIHud);
-            match **aircraft_selector.unwrap() {
-                AircraftSelector::Breeze => {
-                    messages.write(UIMessage::SpawnBreeze);
-                }
-                AircraftSelector::J3Cub => {
-                    messages.write(UIMessage::SpawnJ3Cub);
-                }
-                AircraftSelector::Helicopter => {
-                    messages.write(UIMessage::SpawnHelicopter);
+            if let Some(ac_sel) = aircraft_selector {
+                match **ac_sel {
+                    AircraftSelector::Breeze => {
+                        messages.write(UIMessage::SpawnBreeze);
+                    }
+                    AircraftSelector::J3Cub => {
+                        messages.write(UIMessage::SpawnJ3Cub);
+                    }
+                    AircraftSelector::Helicopter => {
+                        messages.write(UIMessage::SpawnHelicopter);
+                    }
                 }
             }
         })
@@ -476,7 +478,10 @@ impl UI {
 
 fn toggle_fullscreen(input: Res<ButtonInput<KeyCode>>, mut windows: Query<&mut Window>) {
     if input.just_pressed(KeyCode::F11) {
-        let mut window = windows.single_mut().unwrap();
+        #[allow(clippy::expect_used)]
+        let mut window = windows
+            .single_mut()
+            .expect("window to exist if keyboard inputs are picked up.");
 
         window.mode = match window.mode {
             WindowMode::Windowed => WindowMode::BorderlessFullscreen(MonitorSelection::Current),
