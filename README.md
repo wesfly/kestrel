@@ -32,17 +32,28 @@ It is still in early development, but it's getting somewhere...
 
 ## Run
 
-### Prerequisites
+
+### Using a precompiled binary
+
+**Download the archive from [here](https://github.com/wesfly/kestrel/releases),
+unzip it, and run the precompiled executable.**
+
+### Compiling it yourself
+
+#### Prerequisites
 
 - **Rust toolchain:** [Install Rust](https://rust-lang.org/tools/install)
+- [`git-lfs`](https://git-lfs.com/)
 
-### Installation steps
+#### Running Kestrel Flight Simulator
 
-Download the archive from [here](https://github.com/wesfly/kestrel/releases),
-unzip it, and run the precompiled executable.
+Compiling the project will take a while and use ~10 GB of memory.
 
-If you want to compile this project yourself, make sure you have `git-lfs` installed to
-get all 3D files and textures.
+```bash
+git clone https://github.com/wesfly/kestrel.git
+cd kestrel
+cargo run --release
+```
 
 ## Terrain
 
