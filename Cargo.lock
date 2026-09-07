@@ -4118,7 +4118,7 @@ dependencies = [
 
 [[package]]
 name = "kestrel"
-version = "0.3.0"
+version = "0.3.3"
 dependencies = [
  "avian3d",
  "avian_fdm",
