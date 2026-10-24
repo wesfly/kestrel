@@ -5,8 +5,6 @@ This is a little flight sim made in Bevy using Rust.
 This project is formerly known as `bevy_fs`, but it was renamed due to
 likelyhood of confusion with a file system crate.
 
-It is still in early development, but it's getting somewhere...
-
 ## Highlights
 
 - Support for both keyboard and gamepad (gamepad is recommended)
@@ -44,10 +42,9 @@ unzip it, and run the precompiled executable.**
 
 - **Rust toolchain:** [Install Rust](https://rust-lang.org/tools/install)
 - [`git-lfs`](https://git-lfs.com/)
+- ~8 GB memory
 
 #### Running Kestrel Flight Simulator
-
-Compiling the project will take a while and use ~10 GB of memory.
 
 ```bash
 git clone https://github.com/wesfly/kestrel.git
@@ -135,12 +132,5 @@ Error downloading object: <some object>: Smudge error: Error downloading <some f
 ```bash
 GIT_LFS_SKIP_SMUDGE=1 git reset --hard HEAD
 git clean -fd
-git lfs pull # You may need to download git-lfs first
+git lfs pull
 ```
-
-## Contributing
-
-PRs welcome.
-
-If you have any problems regarding this repository, please report them as an
-issue. Thank you!
