@@ -1,0 +1,8 @@
+[general]
+name = "parachute"
+version = "v0.1.0"
+
+[description]
+name = "Parachute"
+description = "An airdrop parachute to deliver weapons, equipment, leaflets or humanitarian aid from a plane without landing an aircraft."
+

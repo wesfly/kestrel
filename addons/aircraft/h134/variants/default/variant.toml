@@ -1,0 +1,7 @@
+name = ""
+
+[controls]
+fly_by_wire = false
+
+[model]
+file_ext = "glb"

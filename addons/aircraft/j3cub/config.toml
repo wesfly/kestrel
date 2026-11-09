@@ -1,0 +1,9 @@
+[general]
+name = "j3cub"
+version = "v0.1.0"
+
+[description]
+name = "J-3 Cub"
+description = '''
+The Piper J-3 Cub is an iconic American light aircraft known for its simple, lightweight design and excellent handling characteristics. First built in 1938, it became a popular trainer and sport plane, with over 19,888 units produced by 1947, making it a beloved classic in aviation history.
+'''

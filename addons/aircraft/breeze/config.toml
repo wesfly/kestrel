@@ -1,0 +1,13 @@
+[general]
+name = "breeze"
+version = "v0.1.0"
+
+[controls]
+fly_by_wire = true
+
+[description]
+name = "Breeze C F3"
+description = "An aeroplane inspired by a French twin-engine, canard delta wing, multirole fighter aircraft."
+
+[model]
+file_ext = "gltf"

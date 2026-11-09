@@ -1,0 +1,7 @@
+name = "C F3"
+
+[controls]
+fly_by_wire = true
+
+[model]
+file_ext = "gltf"

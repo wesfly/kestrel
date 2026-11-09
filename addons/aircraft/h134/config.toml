@@ -1,0 +1,7 @@
+[general]
+name = "h134"
+version = "v0.1.0"
+
+[description]
+name = "H134"
+description = "A fictional single-engine civil light utility helicopter."
