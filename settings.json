@@ -4,7 +4,7 @@
     "hotas": true
   },
   "shadow_distance": 10000.0,
-  "buildings_enabled": true,
+  "buildings_enabled": false,
   "terrain": {
     "coord": { "lat": 43.12694, "long": 5.93071 },
     "max_render_distance": 200000.0,
