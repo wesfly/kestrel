@@ -1,10 +1,7 @@
 use crate::{
     CELL_SIZE, Settings, TOKIO_RUNTIME,
     aircraft::{AircraftState, breeze::landing_gear::LandingGearStatus},
-    scenery::{
-        osm::buildings::SpawnBuilding,
-        terrain::{TerrainCacheResource, TerrainChunkRegistry},
-    },
+    scenery::terrain::{TerrainCacheResource, TerrainChunkRegistry},
     ui::MenuCamera,
 };
 use bevy::{
@@ -59,19 +56,6 @@ pub fn setup_scene(
         let earth_medium = scattering_mediums.add(earth_medium);
         let earth_atmosphere = Atmosphere::earth(earth_medium);
         root.spawn_spatial(earth_atmosphere.clone());
-
-        if settings.buildings_enabled {
-            let tokio_handle = TOKIO_RUNTIME.spawn(osm::buildings::spawn(
-                root.grid().clone(),
-                coord.lat - 0.05,
-                coord.long - 0.05,
-                coord.lat + 0.05,
-                coord.long + 0.05,
-            ));
-
-            let task = thread_pool.spawn(async move { tokio_handle.await.unwrap_or_default() });
-            root.spawn(SpawnBuilding { task });
-        }
     });
 
     commands.entity(*camera).despawn();

@@ -1,4 +1,3 @@
-use crate::SimState;
 use avian3d::{
     dynamics::{
         integrator::Gravity,
@@ -16,10 +15,10 @@ impl Plugin for GravityPlugin {
     }
 }
 
-fn planet_gravity(mut query: Query<(Forces, &Position)>) {
+pub fn planet_gravity(mut query: Query<(Forces, &Position)>) {
     let planet_center = DVec3::new(0.0, 0.0, 0.0);
     for (mut forces, position) in &mut query {
-        let to_center: Vec3 = (planet_center - position.as_ivec3().as_dvec3()).as_vec3();
+        let to_center = planet_center - position.0;
         let direction = to_center.normalize_or_zero();
         forces.apply_linear_acceleration(direction * 9.81);
     }

@@ -7,8 +7,10 @@ Default for speed is m/s
 */
 
 mod aircraft;
+mod big_space_compatibility;
 mod camera;
 mod input;
+mod physics;
 mod scenery;
 mod sse;
 mod ui;
@@ -23,10 +25,7 @@ use crate::{
     },
     camera::{AircraftCamera, CameraPosition, CameraSettings, rotate_sun},
     input::{ControlInputs, Gamepad},
-    scenery::{
-        osm::buildings::BuildingMaterial,
-        terrain::{self, TerrainCacheResource, TerrainMaterial, TerrainSettings},
-    },
+    scenery::terrain::{self, TerrainCacheResource, TerrainMaterial, TerrainSettings},
     sse::Sse,
     ui::{Menu, UI},
 };
@@ -200,7 +199,6 @@ fn main() {
     // .add_plugins(AircraftFdmDebugPlugin)
     // .add_plugins(PhysicsDebugPlugin)
     // Resources
-    .init_resource::<BuildingMaterial>()
     .insert_resource(PhysicsPickingSettings {
         require_markers: true,
     })
@@ -263,14 +261,14 @@ fn main() {
     .add_systems(
         FixedPostUpdate,
         (
-            sync_to_avian.in_set(PhysicsSystems::Prepare),
-            sync_from_avian.in_set(TransformSystems::Propagate),
+            big_space_compatibility::sync_to_avian.in_set(PhysicsSystems::Prepare),
+            big_space_compatibility::sync_from_avian.in_set(TransformSystems::Propagate),
         ),
     )
     .add_systems(
         FixedUpdate,
         (
-            planet_gravity,
+            physics::planet_gravity,
             update_control_surfaces,
             Light::update_light_cycle,
             (Light::update_mesh_lights, Light::update_lights).after(Light::update_light_cycle),
@@ -281,7 +279,6 @@ fn main() {
             Button::listener,
             rotate_sun,
             game_state,
-            scenery::osm::buildings::poll,
         ),
     );
 
@@ -340,52 +337,6 @@ fn game_state(mut physics_time: ResMut<Time<Physics>>, game_state: Res<GameState
 }
 
 pub const CELL_SIZE: f64 = 500.0;
-
-// big_space compatibility systems
-
-fn sync_to_avian(mut bodies: Query<(&CellCoord, &Transform, &mut Position, &mut Rotation)>) {
-    for (cell, transform, mut pos, mut rot) in &mut bodies {
-        let cell_diff = DVec3::new((cell.x) as f64, (cell.y) as f64, (cell.z) as f64);
-        let position = transform.translation.as_dvec3() + cell_diff * CELL_SIZE;
-        let rotation = transform.rotation.as_dquat().normalize();
-
-        pos.0 = position;
-        rot.0 = rotation;
-    }
-}
-
-fn sync_from_avian(mut bodies: Query<(&Position, &mut CellCoord, &mut Transform, &Rotation)>) {
-    for (pos, mut cell, mut transform, rot) in &mut bodies {
-        let relative_pos = pos.0;
-
-        let cell_offset_x = (relative_pos.x / CELL_SIZE).round() as i64;
-        let cell_offset_y = (relative_pos.y / CELL_SIZE).round() as i64;
-        let cell_offset_z = (relative_pos.z / CELL_SIZE).round() as i64;
-
-        cell.x = cell_offset_x;
-        cell.y = cell_offset_y;
-        cell.z = cell_offset_z;
-        transform.translation = (relative_pos
-            - DVec3::new(
-                cell_offset_x as f64 * CELL_SIZE,
-                cell_offset_y as f64 * CELL_SIZE,
-                cell_offset_z as f64 * CELL_SIZE,
-            ))
-        .as_vec3();
-        transform.rotation = rot.as_quat().normalize();
-    }
-}
-
-fn planet_gravity(mut query: Query<(Forces, &Position)>, game_state: Res<GameState>) {
-    if game_state.running {
-        let planet_center = DVec3::new(0.0, 0.0, 0.0); // your planet's position
-        for (mut forces, position) in &mut query {
-            let to_center = planet_center - position.as_ivec3().as_dvec3();
-            let direction = to_center.normalize_or_zero();
-            forces.apply_linear_acceleration(direction * 9.81);
-        }
-    }
-}
 
 pub fn absolute_position(cell: &CellCoord, local_translation: Vec3) -> DVec3 {
     DVec3::new(cell.x as f64, cell.y as f64, cell.z as f64) * CELL_SIZE as f64
