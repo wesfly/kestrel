@@ -17,12 +17,12 @@ pub struct ControlInputs {
 }
 
 #[derive(Serialize, Deserialize, Clone)]
-pub struct Gamepad {
+pub struct GamepadSettings {
     enabled: bool,
     hotas: bool,
 }
 
-impl Default for Gamepad {
+impl Default for GamepadSettings {
     fn default() -> Self {
         Self {
             enabled: false,

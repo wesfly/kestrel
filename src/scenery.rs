@@ -1,6 +1,5 @@
 use crate::{
-    CELL_SIZE, Settings, TOKIO_RUNTIME,
-    aircraft::{AircraftState, breeze::landing_gear::LandingGearStatus},
+    CELL_SIZE, Settings,
     scenery::terrain::{TerrainCacheResource, TerrainChunkRegistry},
     ui::MenuCamera,
 };
@@ -11,7 +10,6 @@ use bevy::{
         light_consts::lux,
     },
     prelude::*,
-    tasks::AsyncComputeTaskPool,
 };
 use big_space::prelude::*;
 
@@ -24,19 +22,10 @@ pub fn setup_scene(
     mut scattering_mediums: ResMut<Assets<ScatteringMedium>>,
     mut terrain_tile_cache: ResMut<TerrainCacheResource>,
     mut terrain_registry: ResMut<TerrainChunkRegistry>,
-    mut ldg_gear_status: ResMut<LandingGearStatus>,
-    mut state: ResMut<AircraftState>,
 ) {
-    // Reset landing gear because the gear could have been left deployed in the last flight
-    *ldg_gear_status = LandingGearStatus::Retracted;
-    state.landing_gear_deployed = false;
     // Init/Reset tile cache
     *terrain_tile_cache = TerrainCacheResource::default();
     *terrain_registry = TerrainChunkRegistry::default();
-
-    let coord = settings.terrain.coord;
-
-    let thread_pool = AsyncComputeTaskPool::get();
 
     commands.spawn_big_space(Grid::new(CELL_SIZE as f32, 10.0), |root| {
         root.insert(Visibility::default());

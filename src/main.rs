@@ -6,6 +6,7 @@ Spatial units are in metres
 Default for speed is m/s
 */
 
+mod addons;
 mod aircraft;
 mod big_space_compatibility;
 mod camera;
@@ -13,34 +14,33 @@ mod input;
 mod physics;
 mod scenery;
 mod sse;
+mod time;
 mod ui;
+mod window;
 
 use crate::{
     aircraft::{
-        Aircraft, AircraftState,
+        Aircraft,
         animations::{update_control_surfaces, update_rotors},
-        breeze::landing_gear::{LandingGear, LandingGearCommand, LandingGearStatus},
         buttons::{Button, ButtonMessages},
+        landing_gear::{LandingGear, LandingGearCommand, LandingGearStatus},
         lights::{ACOL_OFF_DURATION, Light, LightsTimers, STROBE_OFF_DURATION},
     },
     camera::{AircraftCamera, CameraPosition, CameraSettings, rotate_sun},
-    input::{ControlInputs, Gamepad},
+    input::{ControlInputs, GamepadSettings},
     scenery::terrain::{self, TerrainCacheResource, TerrainMaterial, TerrainSettings},
     sse::Sse,
-    ui::{Menu, UI},
+    ui::UI,
 };
 use avian_fdm::prelude::*;
 use avian3d::prelude::*;
 use bevy::{
     dev_tools::diagnostics_overlay::DiagnosticsOverlayPlugin,
     diagnostic::FrameTimeDiagnosticsPlugin,
-    ecs::system::SystemId,
     feathers::{dark_theme::create_dark_theme, theme::UiTheme},
     math::DVec3,
     pbr::ExtendedMaterial,
     prelude::*,
-    render::view::screenshot::{Capturing, Screenshot, save_to_disk},
-    window::{CursorIcon, SystemCursorIcon},
 };
 use bevy_skein::SkeinPlugin;
 use big_space::prelude::*;
@@ -48,10 +48,7 @@ use core::option::Option::Some;
 use once_cell::sync::Lazy;
 use reqwest::Client;
 use serde::Deserialize;
-use std::{
-    sync::Arc,
-    {collections::HashMap, fs},
-};
+use std::{fs, sync::Arc};
 use tokio::{runtime::Runtime, sync::Semaphore};
 
 #[cfg(debug_assertions)]
@@ -60,6 +57,23 @@ use bevy::dev_tools::diagnostics_overlay::DiagnosticsOverlay;
 pub const METRES_TO_FEET: f32 = 3.28084;
 pub const M_S_TO_KTS: f32 = 1.943844;
 pub const EARTH_RADIUS: f32 = 6_360_000.0;
+pub const G: f32 = -9.81;
+
+#[derive(States, Clone, PartialEq, Eq, Hash, Debug, Default)]
+pub enum AppState {
+    #[default]
+    Menu,
+    Loading,
+    InGame,
+}
+
+#[derive(SubStates, Debug, Default, PartialEq, PartialOrd, Ord, Eq, Hash, Clone)]
+#[source(AppState = AppState::InGame)]
+pub enum SimState {
+    #[default]
+    Paused,
+    Running,
+}
 
 #[derive(Resource)]
 pub struct MaterialStore {
@@ -77,7 +91,7 @@ pub fn bevy_to_aerospace_coords() -> Quat {
 
 #[derive(Resource, Deserialize)]
 pub struct Settings {
-    gamepad: input::Gamepad,
+    gamepad: GamepadSettings,
     shadow_distance: f32,
     buildings_enabled: bool,
     terrain: TerrainSettings,
@@ -86,7 +100,7 @@ pub struct Settings {
 impl Default for Settings {
     fn default() -> Self {
         Self {
-            gamepad: Gamepad::default(),
+            gamepad: GamepadSettings::default(),
             shadow_distance: 5000.0,
             buildings_enabled: false, // Buildings are heavy to compute
             terrain: TerrainSettings::default(),
@@ -119,41 +133,6 @@ impl Settings {
 #[derive(Resource)]
 pub struct GameState {
     pub running: bool,
-}
-
-#[derive(Resource)]
-pub struct RunOnceSystemList(HashMap<String, SystemId>);
-
-impl FromWorld for RunOnceSystemList {
-    fn from_world(world: &mut World) -> Self {
-        let mut run_once_systems = RunOnceSystemList(HashMap::new());
-        run_once_systems.0.insert(
-            "setup_scene".into(),
-            world.register_system(scenery::setup_scene),
-        );
-        run_once_systems.0.insert(
-            "setup_breeze".into(),
-            world.register_system(aircraft::spawn_breeze),
-        );
-        run_once_systems.0.insert(
-            "setup_j3cub".into(),
-            world.register_system(aircraft::spawn_j3cub),
-        );
-        run_once_systems.0.insert(
-            "spawn_helicopter".into(),
-            world.register_system(aircraft::spawn_helicopter),
-        );
-        run_once_systems.0.insert(
-            "spawn_ui_hud".into(),
-            world.register_system(UI::setup_ui_hud),
-        );
-
-        run_once_systems
-            .0
-            .insert("spawn_menu".into(), world.register_system(Menu::spawn));
-
-        run_once_systems
-    }
 }
 
 fn main() {
@@ -225,12 +204,9 @@ fn main() {
     .init_resource::<terrain::TerrainCacheResource>()
     .init_resource::<terrain::TerrainChunkRegistry>()
     .init_resource::<terrain::TerrainUpdateTracker>()
-    .init_resource::<RunOnceSystemList>()
     .insert_resource(ClearColor(Color::BLACK))
     .insert_resource(TerrainCacheResource::default())
     .insert_resource(UiTheme(create_dark_theme()))
-    .insert_resource(AircraftState::default())
-    .insert_resource(LandingGearStatus::Retracted)
     .insert_resource(CameraPosition::default())
     .insert_resource(avian3d::physics_transform::PhysicsTransformConfig {
         propagate_before_physics: false,
@@ -252,7 +228,7 @@ fn main() {
             update_rotors,
             input::input_system,
             aircraft::buttons::update_cursor,
-            screenshot,
+            window::trigger_screenshot,
             AircraftCamera::controller,
             terrain::poll_terrain,
             track_resets,
@@ -272,10 +248,9 @@ fn main() {
             update_control_surfaces,
             Light::update_light_cycle,
             (Light::update_mesh_lights, Light::update_lights).after(Light::update_light_cycle),
-            LandingGear::operate_landing_gear,
-            screenshot_saving,
+            LandingGear::operate_landing_gear.run_if(in_state(SimState::Running)),
+            window::screenshot_saving,
             aircraft::screens::update_screens,
-            aircraft::main,
             Button::listener,
             rotate_sun,
             game_state,
@@ -299,34 +274,6 @@ fn setup(mut commands: Commands) {
             ..default()
         },
     });
-}
-
-fn screenshot(mut commands: Commands, input: Res<ButtonInput<KeyCode>>) {
-    if input.just_pressed(KeyCode::F3) {
-        let now = chrono::Local::now();
-        let path = format!(".user/screenshots/screenshot-{:?}.png", now);
-        commands
-            .spawn(Screenshot::primary_window())
-            .observe(save_to_disk(path));
-    }
-}
-
-fn screenshot_saving(
-    mut commands: Commands,
-    screenshot_saving: Query<Entity, With<Capturing>>,
-    window: Single<Entity, With<Window>>,
-) {
-    match screenshot_saving.iter().count() {
-        0 => {
-            commands.entity(*window).remove::<CursorIcon>();
-        }
-        x if x > 0 => {
-            commands
-                .entity(*window)
-                .insert(CursorIcon::from(SystemCursorIcon::Progress));
-        }
-        _ => {}
-    }
 }
 
 fn game_state(mut physics_time: ResMut<Time<Physics>>, game_state: Res<GameState>) {

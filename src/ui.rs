@@ -1,6 +1,6 @@
 use crate::{
-    ControlInputs, EARTH_RADIUS, GameState, RunOnceSystemList, Settings,
-    aircraft::{Aircraft, AircraftState, AircraftTypes},
+    AppState, ControlInputs, EARTH_RADIUS, GameState, Settings,
+    aircraft::{Aircraft, AircraftTypes},
     scenery::terrain::Coord,
 };
 use avian3d::prelude::LinearVelocity;
@@ -57,13 +57,13 @@ fn aircraft_selector() -> impl Scene {
             min_width: px(200),
         }
         Children [
-            subpane() Children [
-                subpane_header() Children [
-                    (Text("Aircraft") ThemedText),
-                ],
-                subpane_body() Children [
+            @subpane() Children [
+                @subpane_header() Children [
+                    Text("Aircraft") ThemedText
+                ]
+                @subpane_body() Children [
                     @FeathersListView {
-                        @rows: { bsn_list! [
+                        @rows: { bsn_list! {
                             @FeathersListRow
                             AircraftSelector::BREEZE
                             Node {
@@ -72,9 +72,10 @@ fn aircraft_selector() -> impl Scene {
                             }
                             Children
                             [
-                                (Text("Breeze C F3") ThemedText),
-                                (label("An aeroplane inspired by a French twin-engine, canard delta wing, multirole fighter aircraft."))
-                            ],
+                                Text("Breeze C F3") ThemedText
+                                --
+                                @label("An aeroplane inspired by a French twin-engine, canard delta wing, multirole fighter aircraft.")
+                            ]
                             @FeathersListRow
                             AircraftSelector::J3CUB
                             Node {
@@ -82,9 +83,10 @@ fn aircraft_selector() -> impl Scene {
                                 margin: UiRect::bottom(px(10))
                             }
                             Children [
-                                (Text("J-3 Cub") ThemedText),
-                                (label("This aeroplane is a classic light aircraft and probably older than you."))
-                            ],
+                                Text("J-3 Cub") ThemedText
+                                --
+                                @label("This aeroplane is a classic light aircraft and probably older than you.")
+                            ]
                             @FeathersListRow
                             AircraftSelector::HELICOPTER
                             Node {
@@ -92,16 +94,16 @@ fn aircraft_selector() -> impl Scene {
                                 margin: UiRect::bottom(px(10))
                             }
                             Children [
-                                (Text("Helicopter H134") ThemedText),
-                                (label("A fictional single-engine civil light utility helicopter."))
-                            ],
-                        ]}
+                                Text("Helicopter H134") ThemedText
+                                --
+                                @label("A fictional single-engine civil light utility helicopter.")
+                            ]
+                        }}
                     }
                     Node {
                         min_height: px(100)
                     }
                     on(listbox_update_selection)
-
                 ]
             ]
         ]
@@ -183,10 +185,10 @@ fn location_menu() -> impl Scene {
             bsn! {
                 @FeathersListRow
                 LocationSelector(coord)
-                Children [(
+                Children [
                     ThemedText
                     Text({name.to_string()})
-                )]
+                ]
             }
         })
         .collect();
@@ -209,11 +211,11 @@ fn location_menu() -> impl Scene {
         }
 
         Children[
-            subpane() Children [
-                subpane_header() Children [
-                    (Text("Location") ThemedText),
-                ],
-                subpane_body() Children [(
+            @subpane() Children [
+                @subpane_header() Children [
+                    Text("Location") ThemedText
+                ]
+                @subpane_body() Children [
                     @FeathersListView {
                         @rows: { Box::new(rows) as Box<dyn SceneList> }
                     }
@@ -221,9 +223,9 @@ fn location_menu() -> impl Scene {
                         max_height: vh(75)
                     }
                     on(listbox_update_selection)
+                    --
 
-                ),
-                (
+
                     @FeathersCheckbox {
                         @caption: bsn! { Text("Buildings (experimental)") ThemedText }
                     }
@@ -245,8 +247,8 @@ fn location_menu() -> impl Scene {
                             }
                         }
                     )
-                )]
-            ],
+                ]
+            ]
 
         ]
     }
@@ -261,9 +263,11 @@ fn ui_root() -> impl Scene {
         }
         Visibility
         Children [
-            aircraft_selector(),
-            fly_button(),
-            location_menu(),
+            @aircraft_selector()
+            --
+            @fly_button()
+            --
+            @location_menu()
         ]
     }
 }
@@ -370,41 +374,15 @@ impl Plugin for UI {
             .add_message::<UIMessage>()
             .add_plugins(FeathersPlugins)
             .add_systems(Startup, Menu::spawn)
-            .add_systems(Update, (Self::update_ui_hud, Self::ui_main_loop))
+            .add_systems(
+                Update,
+                Self::update_ui_hud.run_if(in_state(AppState::InGame)),
+            )
             .add_systems(FixedUpdate, toggle_fullscreen);
     }
 }
 
 impl UI {
-    fn ui_main_loop(
-        mut commands: Commands,
-        mut messages: MessageReader<UIMessage>,
-        menu_query: Query<Entity, With<Menu>>,
-        systems: Res<RunOnceSystemList>,
-    ) {
-        for message in messages.read() {
-            match message {
-                UIMessage::DespawnMenu => Menu::despawn(&mut commands, menu_query),
-                UIMessage::SpawnMenu => {
-                    commands.run_system(systems.0["spawn_menu"]);
-                }
-                UIMessage::SpawnUIHud => commands.run_system(systems.0["spawn_ui_hud"]),
-                UIMessage::SpawnScenery => {
-                    commands.run_system(systems.0["setup_scene"]);
-                }
-                UIMessage::SpawnHelicopter => {
-                    commands.run_system(systems.0["spawn_helicopter"]);
-                }
-                UIMessage::SpawnBreeze => {
-                    commands.run_system(systems.0["setup_breeze"]);
-                }
-                UIMessage::SpawnJ3Cub => {
-                    commands.run_system(systems.0["setup_j3cub"]);
-                }
-            }
-        }
-    }
-
     pub fn setup_ui_hud(mut commands: Commands) {
         commands.spawn((
             Node {
@@ -415,6 +393,7 @@ impl UI {
             },
             Text::new("Altitude"),
             UIHudComponent::Altitude,
+            DespawnOnExit(AppState::InGame),
         ));
         commands.spawn((
             Node {
@@ -425,6 +404,7 @@ impl UI {
             },
             Text::new("Throttle"),
             UIHudComponent::Throttle,
+            DespawnOnExit(AppState::InGame),
         ));
 
         commands.spawn((
@@ -436,19 +416,19 @@ impl UI {
             },
             Text::new("Velocity"),
             UIHudComponent::Velocity,
+            DespawnOnExit(AppState::InGame),
         ));
     }
 
     fn update_ui_hud(
         query: Query<(&mut Text, &UIHudComponent)>,
-        state: Res<AircraftState>,
-        aircraft: Single<(&Transform, &avian3d::prelude::Position), With<Aircraft>>,
+        aircraft: Single<(&Aircraft, &Transform, &avian3d::prelude::Position)>,
         input: Res<ControlInputs>,
         vel: Single<&LinearVelocity, With<Aircraft>>,
     ) {
-        let (transform, position) = *aircraft;
+        let (aircraft, transform, position) = *aircraft;
         for (mut text, ui_hud_component) in query {
-            let forward = match state.aircraft_type {
+            let forward = match aircraft.aircraft_type {
                 AircraftTypes::Helicopter => -transform.local_z(),
                 _ => transform.local_x(),
             };
@@ -465,10 +445,7 @@ impl UI {
                     format!("Throttle: {}%", (input.throttle * 100.0).round())
                 }
                 UIHudComponent::Velocity => {
-                    format!(
-                        "Velocity: {:?} km/h",
-                        (forward.dot(vel.0.as_vec3()) * 3.6) as i32
-                    )
+                    format!("Velocity: {:?} km/h", (forward.dot(vel.0) * 3.6) as i32)
                 }
             };
             text.0 = string;

@@ -1,9 +1,11 @@
+use std::f32::consts::PI;
+
 use crate::{
     EARTH_RADIUS, M_S_TO_KTS, METRES_TO_FEET,
     aircraft::{Aircraft, alpha_deg},
     input::ControlInputs,
 };
-use avian3d::{math::PI, physics_transform::Position, prelude::LinearVelocity};
+use avian3d::{physics_transform::Position, prelude::LinearVelocity};
 use bevy::{
     asset::RenderAssetUsages,
     camera::RenderTarget,
@@ -295,7 +297,7 @@ pub fn update_screens(
                 ScreenUiElement::AirspeedKts => {
                     *text = Text::new(format!(
                         "{} kts",
-                        (transform.local_x().dot(velocity.0.as_vec3()) * M_S_TO_KTS) as i32
+                        (transform.local_x().dot(velocity.0) * M_S_TO_KTS) as i32
                     ))
                 }
                 ScreenUiElement::Altitude => {
@@ -305,7 +307,7 @@ pub fn update_screens(
                     ))
                 }
                 ScreenUiElement::Alpha => {
-                    let alpha_deg = alpha_deg(velocity, transform);
+                    let alpha_deg = alpha_deg(&velocity.0, transform);
                     *text = Text::new(format!("AOA {:.2}", alpha_deg))
                 }
 

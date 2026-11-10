@@ -1,4 +1,7 @@
-use crate::{MaterialStore, aircraft::AircraftState};
+use crate::{
+    MaterialStore,
+    aircraft::{Aircraft, landing_gear::LandingGearStatus},
+};
 use bevy::{
     ecs::{lifecycle::HookContext, world::DeferredWorld},
     prelude::*,
@@ -34,17 +37,8 @@ fn on_add_use_light_material(mut world: DeferredWorld, HookContext { entity, .. 
         .insert(MeshMaterial3d(handle));
 }
 
-#[derive(
-    Copy,
-    Clone,
-    Default,
-    PartialEq,
-    Deserialize,
-    Debug,
-    Component,
-    Reflect
-)]
-#[reflect(Component, Default)]
+#[derive(Clone, PartialEq, Deserialize, Debug, Component, Reflect)]
+#[reflect(Component)]
 #[type_path = "skein"]
 pub enum Light {
     CockpitGearInd,
@@ -54,53 +48,19 @@ pub enum Light {
     PositionStarboard,
     PositionRear,
     Formation,
-    #[default]
     Landing,
-}
-
-#[derive(Resource)]
-pub struct LightsTimers {
-    pub acol: Timer,
-    pub acol_on_cycle: bool,
-    pub strobe: Timer,
-    pub strobe_on_cycle: bool,
+    Custom(String),
 }
 
 impl Light {
-    pub fn update_light_cycle(time: Res<Time>, mut timer: ResMut<LightsTimers>) {
-        let delta = time.delta();
-        if timer.acol.just_finished() && !timer.acol_on_cycle {
-            timer.acol_on_cycle = true;
-            timer
-                .acol
-                .set_duration(Duration::from_secs_f32(ACOL_ON_DURATION));
-        } else if timer.acol.just_finished() && timer.acol_on_cycle {
-            timer.acol_on_cycle = false;
-            timer
-                .acol
-                .set_duration(Duration::from_secs_f32(ACOL_OFF_DURATION));
-        }
+    pub fn is_on(&self) {}
+}
 
-        if timer.strobe.just_finished() && !timer.strobe_on_cycle {
-            timer.strobe_on_cycle = true;
-            timer
-                .strobe
-                .set_duration(Duration::from_secs_f32(STROBE_ON_DURATION));
-        } else if timer.strobe.just_finished() && timer.strobe_on_cycle {
-            timer.strobe_on_cycle = false;
-            timer
-                .strobe
-                .set_duration(Duration::from_secs_f32(STROBE_OFF_DURATION));
-        }
-
-        timer.acol.tick(delta);
-        timer.strobe.tick(delta);
-    }
-
+impl Light {
     pub fn update_mesh_lights(
+        aircraft: Single<&Aircraft>,
         material_handles: Query<(&MeshMaterial3d<StandardMaterial>, &Light, Entity)>,
         mut materials: ResMut<Assets<StandardMaterial>>,
-        state: Res<AircraftState>,
         timer: ResMut<LightsTimers>,
     ) {
         for material_handle in material_handles.iter() {
@@ -114,28 +74,28 @@ impl Light {
 
                 match material_handle.1 {
                     Light::AntiCol => {
-                        if state.lights.anti_col && timer.acol_on_cycle {
+                        if aircraft.lights.anti_col && timer.acol_on_cycle {
                             *red = 100.0
                         } else {
                             *red = 0.0
                         }
                     }
                     Light::PositionPort => {
-                        if state.lights.pos {
+                        if aircraft.lights.pos {
                             *red = 100.
                         } else {
                             *red = 0.0
                         }
                     }
                     Light::PositionStarboard => {
-                        if state.lights.pos {
+                        if aircraft.lights.pos {
                             *green = 100.
                         } else {
                             *green = 0.0
                         }
                     }
                     Light::PositionRear => {
-                        if state.lights.pos {
+                        if aircraft.lights.pos {
                             *red = 100.;
                             *green = 100.;
                             *blue = 100.
@@ -146,7 +106,7 @@ impl Light {
                         }
                     }
                     Light::Strobe => {
-                        if state.lights.strobe && timer.strobe_on_cycle {
+                        if aircraft.lights.strobe && timer.strobe_on_cycle {
                             *red = 100.;
                             *green = 100.;
                             *blue = 100.
@@ -157,7 +117,7 @@ impl Light {
                         }
                     }
                     Light::Formation => {
-                        if state.lights.form {
+                        if aircraft.lights.form {
                             *red = 10.;
                             *green = 20.;
                             *blue = 0.
@@ -168,7 +128,9 @@ impl Light {
                         }
                     }
                     Light::Landing => {
-                        if state.lights.landing && state.landing_gear_deployed {
+                        if aircraft.lights.landing
+                            && aircraft.landing_gear == LandingGearStatus::Deployed
+                        {
                             *red = 500.;
                             *green = 500.;
                             *blue = 500.
@@ -179,7 +141,7 @@ impl Light {
                         }
                     }
                     Light::CockpitGearInd => {
-                        if state.landing_gear_deployed {
+                        if aircraft.landing_gear == LandingGearStatus::Deployed {
                             *green = 50.0
                         } else {
                             *red = 0.0;
@@ -193,23 +155,25 @@ impl Light {
     }
 
     pub fn update_lights(
-        state: Res<AircraftState>,
+        aircraft: Single<&Aircraft>,
         timer: ResMut<LightsTimers>,
         point_light_query: Query<(&mut PointLight, &Light)>,
         spot_light_query: Query<(&mut SpotLight, &Light)>,
     ) {
         for (mut point_light, light) in point_light_query {
             let (colour, on) = match light {
-                Light::PositionPort => (Color::linear_rgb(10.0, 0.0, 0.0), state.lights.pos),
-                Light::PositionStarboard => (Color::linear_rgb(0.0, 10.0, 0.0), state.lights.pos),
-                Light::PositionRear => (Color::linear_rgb(1.0, 1.0, 1.0), state.lights.pos),
+                Light::PositionPort => (Color::linear_rgb(10.0, 0.0, 0.0), aircraft.lights.pos),
+                Light::PositionStarboard => {
+                    (Color::linear_rgb(0.0, 10.0, 0.0), aircraft.lights.pos)
+                }
+                Light::PositionRear => (Color::linear_rgb(1.0, 1.0, 1.0), aircraft.lights.pos),
                 Light::AntiCol => (
                     Color::linear_rgb(1.0, 0.0, 0.0),
-                    (state.lights.anti_col && timer.acol_on_cycle),
+                    (aircraft.lights.anti_col && timer.acol_on_cycle),
                 ),
                 Light::Strobe => (
                     Color::linear_rgb(1.0, 1.0, 1.0),
-                    (state.lights.strobe && timer.strobe_on_cycle),
+                    (aircraft.lights.strobe && timer.strobe_on_cycle),
                 ),
 
                 _ => (Color::linear_rgb(1.0, 1.0, 1.0), false),
@@ -227,7 +191,7 @@ impl Light {
             let (colour, on) = match light {
                 Light::Landing => (
                     Color::linear_rgb(1.0, 1.0, 1.0),
-                    state.lights.landing && state.landing_gear_deployed,
+                    aircraft.lights.landing && aircraft.landing_gear == LandingGearStatus::Deployed,
                 ),
                 _ => (Color::BLACK, false),
             };

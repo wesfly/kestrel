@@ -1,5 +1,5 @@
-use crate::{SimState, addons::Addons, aircraft::Aircraft, input::ControlInputs};
-use bevy::{asset::AssetPath, prelude::*};
+use crate::{SimState, addons::Addons, aircraft::Aircraft};
+use bevy::prelude::*;
 use mlua::{
     Lua, LuaSerdeExt,
     prelude::{LuaFunction, LuaResult, LuaValue},

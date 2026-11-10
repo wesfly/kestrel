@@ -59,7 +59,7 @@ impl ButtonAction {
         Some(match self {
             Self::Engine => engine.is_on(),
             Self::ParkingBrake => aircraft.parking_brake,
-            Self::LandingGear => aircraft.landing_gear_deployed,
+            Self::LandingGear => aircraft.landing_gear == LandingGearStatus::Deployed,
             Self::Script(n) => {
                 let mut split = n.split(".");
                 let Some(first) = split.next() else {
@@ -117,7 +117,6 @@ pub fn run_actions(
     mut aircraft: Single<&mut Aircraft>,
     mut engines: Query<&mut Engine>,
     mut lights: Query<&mut Light>,
-    gear_status: Res<LandingGearStatus>,
     mut gear_commands: MessageWriter<LandingGearCommand>,
     mut script_presses: MessageWriter<ScriptButtonPressed>,
 ) {
@@ -129,7 +128,7 @@ pub fn run_actions(
             ButtonAction::ParkingBrake => aircraft.parking_brake ^= true,
             ButtonAction::LandingGear => {
                 if matches!(
-                    *gear_status,
+                    *&aircraft.landing_gear,
                     LandingGearStatus::Deployed | LandingGearStatus::Retracted
                 ) {
                     gear_commands.write(LandingGearCommand(LandingGearCommands::Toggle));

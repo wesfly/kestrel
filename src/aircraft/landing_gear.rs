@@ -37,7 +37,7 @@ pub enum LandingGearCommands {
 #[derive(Message)]
 pub struct LandingGearCommand(pub LandingGearCommands);
 
-#[derive(Resource, Deserialize, Debug, Default, Clone)]
+#[derive(Deserialize, Debug, Default, Clone, Copy, Eq, PartialEq)]
 pub enum LandingGearStatus {
     Deploying,
     Deployed,
@@ -177,31 +177,29 @@ impl LandingGear {
     pub fn operate_landing_gear(
         mut landing_gear_messages: MessageReader<LandingGearCommand>,
         mut query: Query<(&mut Transform, &LandingGearElement)>,
-        mut state: Single<&mut Aircraft>,
-        mut status: ResMut<LandingGearStatus>,
+        mut aircraft: Single<&mut Aircraft>,
         time: Res<Time>,
         mut phase: Local<LdgGearPhase>,
         mut hash_ldg: Local<std::collections::HashMap<LandingGearElement, f32>>,
     ) {
         if landing_gear_messages.read().last().is_some() {
             *phase = LdgGearPhase::Phase1;
-            match *status {
+            match *&aircraft.landing_gear {
                 LandingGearStatus::Deployed => {
-                    *status = LandingGearStatus::Retracting;
+                    *&mut aircraft.landing_gear = LandingGearStatus::Retracting;
                 }
                 LandingGearStatus::Retracted => {
-                    *status = LandingGearStatus::Deploying;
+                    *&mut aircraft.landing_gear = LandingGearStatus::Deploying;
                 }
                 _ => {}
             };
         }
 
-        match *status {
+        match *&aircraft.landing_gear {
             LandingGearStatus::Deploying => {
                 Self::deploy_landing_gear(
                     &mut query,
-                    &mut state,
-                    &mut status,
+                    &mut aircraft,
                     &time,
                     &mut phase,
                     &mut hash_ldg,
@@ -210,12 +208,11 @@ impl LandingGear {
             LandingGearStatus::Retracting => {
                 Self::retract_landing_gear(
                     &mut query,
-                    &mut status,
+                    &mut aircraft.landing_gear,
                     &time,
                     &mut phase,
                     &mut hash_ldg,
                 );
-                state.landing_gear_deployed = false;
             }
             _ => {}
         }
@@ -223,8 +220,7 @@ impl LandingGear {
 
     pub fn deploy_landing_gear(
         query: &mut Query<(&mut Transform, &LandingGearElement)>,
-        state: &mut Aircraft,
-        status: &mut LandingGearStatus,
+        aircraft: &mut Aircraft,
         time: &Time,
         phase: &mut LdgGearPhase,
         mut hash_ldg: &mut std::collections::HashMap<LandingGearElement, f32>,
@@ -251,8 +247,7 @@ impl LandingGear {
             LdgGearPhase::Phase1 => *phase = LdgGearPhase::Phase2,
             LdgGearPhase::Phase2 => *phase = LdgGearPhase::Phase3,
             LdgGearPhase::Phase3 => {
-                *status = LandingGearStatus::Deployed;
-                state.landing_gear_deployed = true;
+                aircraft.landing_gear = LandingGearStatus::Deployed;
             }
         }
     }

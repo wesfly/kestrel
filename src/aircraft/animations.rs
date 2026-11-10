@@ -1,12 +1,13 @@
-use crate::aircraft::{AircraftState, BothSides, ControlSurfaces, RotorTypes};
+use crate::aircraft::{Aircraft, ControlSurfaces, RotorTypes, Sides};
 use bevy::prelude::*;
 
 pub fn update_rotors(
     query: Query<(&mut Transform, &RotorTypes)>,
-    state: Res<AircraftState>,
+    aircraft: Single<&Aircraft>,
     time: Res<Time>,
 ) {
-    if state.engine.on {
+    // TODO include Engine component
+    if aircraft.engine.on {
         for (mut rotor, rotor_type) in query {
             match rotor_type {
                 RotorTypes::Main(a) => rotor.rotate_local_axis(*a, 100.0 * time.delta_secs()),
@@ -27,16 +28,16 @@ pub fn update_control_surfaces(
         &ControlSurfaces,
         Option<&RestRotation>,
     )>,
-    state: Res<AircraftState>,
+    state: Single<&Aircraft>,
 ) {
     let cs = state.control_surfaces;
-    let aileron_angle = BothSides {
-        port: (cs.aileron.port * 30.0).to_radians(),
-        starboard: (cs.aileron.starboard * 30.0).to_radians(),
+    let aileron_angle = Sides {
+        left: (cs.aileron.left * 30.0).to_radians(),
+        right: (cs.aileron.right * 30.0).to_radians(),
     };
-    let elevator_angle = BothSides {
-        port: (cs.elevator.port * 30.0).to_radians(),
-        starboard: (cs.elevator.starboard * 30.0).to_radians(),
+    let elevator_angle = Sides {
+        left: (cs.elevator.left * 30.0).to_radians(),
+        right: (cs.elevator.right * 30.0).to_radians(),
     };
     let lerp_speed = 0.05;
 
@@ -52,15 +53,15 @@ pub fn update_control_surfaces(
         };
 
         let delta = match ctrl_surface {
-            ControlSurfaces::CanardPort => Quat::from_rotation_y(cs.canards.port),
-            ControlSurfaces::CanardStarboard => Quat::from_rotation_y(cs.canards.starboard),
+            ControlSurfaces::CanardRight => Quat::from_rotation_y(cs.canards.left),
+            ControlSurfaces::CanardRight => Quat::from_rotation_y(cs.canards.right),
             ControlSurfaces::Rudder => Quat::from_rotation_y((-cs.rudder * 30.0).to_radians()),
-            ControlSurfaces::ElevatorPort => Quat::from_rotation_x(elevator_angle.port),
-            ControlSurfaces::ElevatorStarboard => Quat::from_rotation_x(elevator_angle.starboard),
-            ControlSurfaces::FlapPort => todo!(),
-            ControlSurfaces::FlapStarboard => todo!(),
-            ControlSurfaces::AileronPort => Quat::from_rotation_x(aileron_angle.port),
-            ControlSurfaces::AileronStarboard => Quat::from_rotation_x(aileron_angle.starboard),
+            ControlSurfaces::ElevatorLeft => Quat::from_rotation_x(elevator_angle.left),
+            ControlSurfaces::ElevatorRight => Quat::from_rotation_x(elevator_angle.right),
+            ControlSurfaces::FlapLeft => todo!(),
+            ControlSurfaces::FlapRight => todo!(),
+            ControlSurfaces::AileronLeft => Quat::from_rotation_x(aileron_angle.left),
+            ControlSurfaces::AileronRight => Quat::from_rotation_x(aileron_angle.right),
         };
 
         let target = rest_rotation * delta;

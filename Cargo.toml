@@ -7,9 +7,13 @@ edition = "2024"
 license-file = "LICENSE.md"
 
 [dependencies]
-avian_fdm = { git = "https://github.com/wesfly/avian_fdm", default-features = false, features = ["f64"] }
+avian_fdm = {
+  git = "https://github.com/wesfly/avian_fdm",
+  default-features = false,
+  features = ["f64", "parry-f64"]
+}
 avian3d = {
-  version = "0.7.0",
+  version = "0.8.0",
   default-features = false,
   features = [
     "3d",
@@ -22,7 +26,7 @@ avian3d = {
   ]
 }
 bevy = {
-  version = "0.19.0",
+  version = "0.20.0",
   default-features = false,
   features = [
     "3d",
@@ -43,7 +47,9 @@ serde = "1.0.228"
 serde_json = "1.0.150"
 tokio = { version = "1.53.0", features = ["full"] }
 earcut = "0.4.11"
-bevy_skein = "0.6.0"
+bevy_skein = "0.7.0"
+mlua = { version = "0.12.2", features = ["lua54", "serde"] }
+chrono-tz = "0.10.4"
 
 [lints.clippy]
 all = { level = "allow", priority = -2 }

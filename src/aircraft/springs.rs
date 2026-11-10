@@ -10,7 +10,7 @@ use crate::{
     G,
     aircraft::{
         Aircraft,
-        landing_gear::{LEFT_POS, NOSEWHEEL_POS, RIGHT_POS},
+        landing_gear::{LEFT_POS, LandingGearStatus, NOSEWHEEL_POS, RIGHT_POS},
     },
     bevy_to_aerospace_coords,
 };
@@ -52,7 +52,9 @@ pub fn spring_forces(
 ) {
     let (aircraft, position, transform, force, _) = query.deref_mut();
 
-    if !(aircraft.landing_gear_deployed && force.linear_velocity().length() <= 200.0) {
+    if !(aircraft.landing_gear == LandingGearStatus::Deployed
+        && force.linear_velocity().length() <= 200.0)
+    {
         return;
     }
 

@@ -1,6 +1,6 @@
 use crate::{
     absolute_position,
-    aircraft::{self, Aircraft, AircraftState, AircraftTypes},
+    aircraft::{self, Aircraft, AircraftTypes},
     bevy_to_aerospace_coords,
     input::Keymap,
 };
@@ -118,8 +118,7 @@ impl AircraftCamera {
             (With<AircraftCamera>, Without<Aircraft>),
         >,
         camera_settings: Res<CameraSettings>,
-        state: Res<AircraftState>,
-        aircraft: Single<(&Transform, &CellCoord), With<Aircraft>>,
+        aircraft: Single<(&Aircraft, &Transform, &CellCoord)>,
         mouse_buttons: Res<ButtonInput<MouseButton>>,
         mouse_motion: Res<AccumulatedMouseMotion>,
         keyboard_input: Res<'_, ButtonInput<KeyCode>>,
@@ -130,11 +129,11 @@ impl AircraftCamera {
         time: Res<Time>,
     ) {
         let (ref mut cam_tf, ref mut cell_coord) = *camera;
-        let (ac_tf, ac_cell) = *aircraft;
+        let (aircraft, ac_tf, ac_cell) = *aircraft;
 
         **cell_coord = *ac_cell;
 
-        let cockpit_default_position = match state.aircraft_type {
+        let cockpit_default_position = match aircraft.aircraft_type {
             aircraft::AircraftTypes::Helicopter => Vec3 {
                 x: 0.38,
                 y: 1.2,
@@ -178,7 +177,7 @@ impl AircraftCamera {
                     roll,
                 );
                 cam_tf.translation = ac_tf.translation + ac_tf.rotation * cockpit_default_position;
-                cam_tf.rotation = match state.aircraft_type {
+                cam_tf.rotation = match aircraft.aircraft_type {
                     AircraftTypes::Helicopter => ac_tf.rotation * camera_pos.cockpit.rotation,
                     _ => ac_tf.rotation * bevy_to_aerospace_coords() * camera_pos.cockpit.rotation,
                 };
@@ -191,7 +190,7 @@ impl AircraftCamera {
                 let orbit_yaw = camera_pos.follow.yaw;
                 let orbit_pitch = camera_pos.follow.pitch;
 
-                let aircraft_forward = match state.aircraft_type {
+                let aircraft_forward = match aircraft.aircraft_type {
                     AircraftTypes::Helicopter => ac_tf.rotation * Vec3::Z,
                     _ => -(ac_tf.rotation * Vec3::X),
                 };
@@ -228,7 +227,7 @@ impl AircraftCamera {
                     (pitch + delta_pitch).clamp(-(FRAC_PI_2 - 0.01), FRAC_PI_2 - 0.01),
                     roll,
                 );
-                cam_tf.translation = match state.aircraft_type {
+                cam_tf.translation = match aircraft.aircraft_type {
                     AircraftTypes::Helicopter => {
                         ac_tf.translation + ac_tf.rotation * camera_settings.tail_default_position
                     }
@@ -240,7 +239,7 @@ impl AircraftCamera {
                     }
                 };
 
-                cam_tf.rotation = match state.aircraft_type {
+                cam_tf.rotation = match aircraft.aircraft_type {
                     AircraftTypes::Helicopter => ac_tf.rotation * camera_pos.tail.rotation,
                     _ => ac_tf.rotation * bevy_to_aerospace_coords() * camera_pos.tail.rotation,
                 };

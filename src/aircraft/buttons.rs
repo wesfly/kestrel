@@ -1,5 +1,5 @@
-use super::AircraftState;
-use crate::aircraft::breeze::landing_gear::{LandingGearCommand, LandingGearStatus};
+use super::Aircraft;
+use crate::aircraft::landing_gear::{LandingGearCommand, LandingGearCommands, LandingGearStatus};
 use bevy::picking::hover::PickingInteraction;
 use bevy::prelude::*;
 use bevy::window::PrimaryWindow;
@@ -103,47 +103,48 @@ impl Button {
 
     pub fn listener(
         mut query_tf_button: Query<(&mut Transform, &Button)>,
-        mut state: ResMut<AircraftState>,
+        mut aircraft: Single<&mut Aircraft>,
         mut messages: MessageReader<ButtonMessages>,
-        ldg_gear_status: Res<LandingGearStatus>,
         mut landing_gear_messages: MessageWriter<LandingGearCommand>,
     ) {
         for message in messages.read() {
             let interface_op = &message.0;
             let (bool, _) = match interface_op {
-                InterfaceOperation::Engine => {
-                    (Some(state.engine.on), state.engine.on = !state.engine.on)
-                }
-                InterfaceOperation::AntiColLt => (
-                    Some(state.lights.anti_col),
-                    state.lights.anti_col = !state.lights.anti_col,
+                InterfaceOperation::Engine => (
+                    Some(aircraft.engine.on),
+                    aircraft.engine.on = !aircraft.engine.on,
                 ),
-                InterfaceOperation::PositionLt => {
-                    (Some(state.lights.pos), state.lights.pos = !state.lights.pos)
-                }
+                InterfaceOperation::AntiColLt => (
+                    Some(aircraft.lights.anti_col),
+                    aircraft.lights.anti_col = !aircraft.lights.anti_col,
+                ),
+                InterfaceOperation::PositionLt => (
+                    Some(aircraft.lights.pos),
+                    aircraft.lights.pos = !aircraft.lights.pos,
+                ),
                 InterfaceOperation::StrobeLt => (
-                    Some(state.lights.strobe),
-                    state.lights.strobe = !state.lights.strobe,
+                    Some(aircraft.lights.strobe),
+                    aircraft.lights.strobe = !aircraft.lights.strobe,
                 ),
                 InterfaceOperation::FormationLt => (
-                    Some(state.lights.form),
-                    state.lights.form = !state.lights.form,
+                    Some(aircraft.lights.form),
+                    aircraft.lights.form = !aircraft.lights.form,
                 ),
                 InterfaceOperation::LdgGear => {
                     let do_not_change_lever_pos;
-                    let (a1, _) = match *ldg_gear_status {
+                    let (a1, _) = match *&aircraft.landing_gear {
                         LandingGearStatus::Deploying => {
                             (Some(true), do_not_change_lever_pos = true)
                         }
                         LandingGearStatus::Deployed => (
-                            Some(state.landing_gear_deployed),
+                            Some(aircraft.landing_gear == LandingGearStatus::Deployed),
                             do_not_change_lever_pos = false,
                         ),
                         LandingGearStatus::Retracting => {
                             (Some(true), do_not_change_lever_pos = true)
                         }
                         LandingGearStatus::Retracted => (
-                            Some(state.landing_gear_deployed),
+                            Some(aircraft.landing_gear == LandingGearStatus::Deployed),
                             do_not_change_lever_pos = false,
                         ),
                     };
@@ -151,15 +152,14 @@ impl Button {
                         continue;
                     }
                     (a1, {
-                        landing_gear_messages.write(LandingGearCommand(
-                            super::breeze::landing_gear::LandingGearCommands::Toggle,
-                        ));
+                        landing_gear_messages
+                            .write(LandingGearCommand(LandingGearCommands::Toggle));
                     })
                 }
 
                 InterfaceOperation::ParkBrk => (
-                    Some(state.parking_brake),
-                    state.parking_brake = !state.parking_brake,
+                    Some(aircraft.parking_brake),
+                    aircraft.parking_brake = !aircraft.parking_brake,
                 ),
                 _ => (None, ()),
             };

@@ -5,7 +5,9 @@ use avian3d::{
     },
     physics_transform::Position,
 };
-use bevy::{math::DVec3, prelude::*};
+use bevy::prelude::*;
+
+use crate::SimState;
 
 pub struct GravityPlugin;
 impl Plugin for GravityPlugin {
@@ -16,9 +18,9 @@ impl Plugin for GravityPlugin {
 }
 
 pub fn planet_gravity(mut query: Query<(Forces, &Position)>) {
-    let planet_center = DVec3::new(0.0, 0.0, 0.0);
+    let planet_center = Vec3::new(0.0, 0.0, 0.0);
     for (mut forces, position) in &mut query {
-        let to_center = planet_center - position.0;
+        let to_center = planet_center - position.0.as_vec3();
         let direction = to_center.normalize_or_zero();
         forces.apply_linear_acceleration(direction * 9.81);
     }
