@@ -32,7 +32,7 @@ jobs:
             libgl1-mesa-dev \
             libasound2-dev \
             libudev-dev \
-            lua54
+            lua5.4
 
       - name: Build
         run: cargo build --locked --verbose
