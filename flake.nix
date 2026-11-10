@@ -51,6 +51,8 @@
               alsa-lib
               vulkan-tools
               mold
+              lua5_4
+              lua-language-server
             ]);
 
           shellHook = ''
