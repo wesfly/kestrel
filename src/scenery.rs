@@ -18,7 +18,6 @@ use bevy::{
 };
 use big_space::prelude::*;
 
-pub mod osm;
 pub mod terrain;
 
 pub fn setup_scene(
