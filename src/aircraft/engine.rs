@@ -4,7 +4,6 @@ use bevy::prelude::*;
 enum EngineRunningMode {
     #[default]
     Off,
-    Idle,
     On,
 }
 
@@ -37,8 +36,6 @@ impl Engine {
         }
     }
 
-    /// Temporary function for the time `EngineRunningMode::Idle` is not implemented
-    // TODO
     pub fn toggle(&mut self) {
         if self.is_on() {
             self.mode = EngineRunningMode::Off;
