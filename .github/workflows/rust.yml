@@ -31,7 +31,8 @@ jobs:
             libxinerama-dev \
             libgl1-mesa-dev \
             libasound2-dev \
-            libudev-dev
+            libudev-dev \
+            lua54
 
       - name: Build
         run: cargo build --locked --verbose
