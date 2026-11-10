@@ -50,14 +50,15 @@
               libudev-zero
               alsa-lib
               vulkan-tools
+              mold
             ]);
 
           shellHook = ''
             export LD_LIBRARY_PATH="$LD_LIBRARY_PATH:/run/opengl-driver/lib:${runtimeLibString}"
-            export DLSS_SDK="/home/me/Documents/Programming/DLSS-310.6.0"
             export VULKAN_SDK="${vulkan-sdk}"
             export LIBCLANG_PATH="${pkgs.llvmPackages.libclang.lib}/lib"
             export BINDGEN_EXTRA_CLANG_ARGS="$NIX_CFLAGS_COMPILE -isystem ${pkgs.glibc.dev}/include"
+            export RUSTFLAGS="-C link-arg=-fuse-ld=mold"
             export RUST_SRC_PATH="${rustToolchain}/lib/rustlib/src/rust/library"
             if [ -f /run/opengl-driver/share/vulkan/icd.d/nvidia_icd.json ]; then
               export VK_ICD_FILENAMES=/run/opengl-driver/share/vulkan/icd.d/nvidia_icd.json

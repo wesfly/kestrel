@@ -59,7 +59,12 @@ unwrap_used = "warn"
 unsafe_code = "forbid"
 
 [profile.dev]
-opt-level = 3
+opt-level = 1
+debug = true
+split-debuginfo = "packed"
+
+[features]
+dev = [ "bevy/dynamic_linking" ]
 
 [profile.release]
 opt-level = 3
