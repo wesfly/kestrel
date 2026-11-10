@@ -37,7 +37,6 @@ chrono = "0.4.45"
 dashmap = "6.2.1"
 futures = "0.3.33"
 image = { version = "0.25.10", features = ["default-formats", "rayon", "webp"] }
-kestrel_osm = { git = "https://github.com/wesfly/kestrel_osm" }
 once_cell = "1.21.4"
 reqwest = { version = "0.13.4" }
 serde = "1.0.228"
