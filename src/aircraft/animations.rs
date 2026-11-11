@@ -1,4 +1,4 @@
-use crate::aircraft::{Aircraft, ControlSurfaces, RotorTypes, Sides};
+use crate::aircraft::{Aircraft, RotorTypes, Sides, control_surfaces::ControlSurfaces};
 use bevy::prelude::*;
 
 pub fn update_rotors(
@@ -53,13 +53,17 @@ pub fn update_control_surfaces(
         };
 
         let delta = match ctrl_surface {
-            ControlSurfaces::CanardRight => Quat::from_rotation_y(cs.canards.left),
-            ControlSurfaces::CanardRight => Quat::from_rotation_y(cs.canards.right),
+            ControlSurfaces::Custom(s) => match &s.as_str() {
+                &"canard_left" => Quat::from_rotation_y(cs.canards.left),
+                &"canard_right" => Quat::from_rotation_y(cs.canards.right),
+                s => {
+                    warn!("Control surface {s} not implemented.");
+                    Quat::default()
+                }
+            },
             ControlSurfaces::Rudder => Quat::from_rotation_y((-cs.rudder * 30.0).to_radians()),
             ControlSurfaces::ElevatorLeft => Quat::from_rotation_x(elevator_angle.left),
             ControlSurfaces::ElevatorRight => Quat::from_rotation_x(elevator_angle.right),
-            ControlSurfaces::FlapLeft => todo!(),
-            ControlSurfaces::FlapRight => todo!(),
             ControlSurfaces::AileronLeft => Quat::from_rotation_x(aileron_angle.left),
             ControlSurfaces::AileronRight => Quat::from_rotation_x(aileron_angle.right),
         };

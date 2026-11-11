@@ -1021,7 +1021,7 @@ fn calculate_required_tiles_for_chunk(
     unique_tiles.into_iter().collect()
 }
 
-fn pos_to_coord(pos: Vec3) -> Coord {
+pub fn pos_to_coord(pos: Vec3) -> Coord {
     let distance_h = (pos.x.powi(2) + pos.z.powi(2)).sqrt();
 
     let bearing = pos.x.atan2(pos.z).to_degrees();

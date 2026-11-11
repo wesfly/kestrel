@@ -2,7 +2,6 @@ pub mod acceleration;
 pub mod airfoils;
 pub mod animations;
 pub mod avionics;
-pub mod buttons;
 pub mod control_surfaces;
 pub mod damage;
 pub mod engine;
@@ -12,9 +11,14 @@ pub mod screens;
 pub mod springs;
 
 use bevy::prelude::*;
+use big_space::grid::cell::CellCoord;
 use serde::Deserialize;
 
-use crate::aircraft::landing_gear::LandingGearStatus;
+use crate::{
+    absolute_position,
+    aircraft::landing_gear::LandingGearStatus,
+    scenery::terrain::{Coord, pos_to_coord},
+};
 
 pub fn alpha_deg(velocity: &Vec3, transform: &Transform) -> f32 {
     let velocity = velocity.normalize_or_zero();
@@ -74,6 +78,7 @@ pub struct LightState {
 pub struct Aircraft {
     pub name: String,
     pub variant: String,
+    pub coord: Coord,
     pub control_surfaces: ControlSurfacesDeflection,
     pub lights: LightState,
     pub aircraft_type: AircraftTypes,
@@ -88,6 +93,7 @@ impl Default for Aircraft {
         Aircraft {
             name: String::new(),
             variant: String::new(),
+            coord: Coord::default(),
             control_surfaces: ControlSurfacesDeflection {
                 canards: 0.0_f32.left_right(),
                 aileron: 0.0_f32.left_right(),
@@ -122,4 +128,12 @@ impl ToSides for f32 {
             right: self,
         }
     }
+}
+
+fn update_aircraft_coord(mut aircraft: Single<(&CellCoord, &Transform, &mut Aircraft)>) {
+    let (cell_coord, transform, aircraft) = &mut *aircraft;
+    let reference_pos = absolute_position(cell_coord, transform.translation).as_vec3();
+
+    // Update aircraft coord
+    aircraft.coord = pos_to_coord(reference_pos.normalize());
 }

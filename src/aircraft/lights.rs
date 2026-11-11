@@ -1,18 +1,11 @@
-use crate::{
-    MaterialStore,
-    aircraft::{Aircraft, landing_gear::LandingGearStatus},
-};
+// TODO: Make lights scriptable in lua file
+
+use crate::{MaterialStore, aircraft::Aircraft};
 use bevy::{
     ecs::{lifecycle::HookContext, world::DeferredWorld},
     prelude::*,
 };
 use serde::Deserialize;
-use std::time::Duration;
-
-pub const STROBE_OFF_DURATION: f32 = 1.0;
-pub const STROBE_ON_DURATION: f32 = 0.1;
-pub const ACOL_OFF_DURATION: f32 = 1.2;
-pub const ACOL_ON_DURATION: f32 = 0.1;
 
 #[derive(Debug, Component, Deserialize, PartialEq, Reflect, Default)]
 #[reflect(Component, Default)]
@@ -39,29 +32,29 @@ fn on_add_use_light_material(mut world: DeferredWorld, HookContext { entity, .. 
 
 #[derive(Clone, PartialEq, Deserialize, Debug, Component, Reflect)]
 #[reflect(Component)]
-#[type_path = "skein"]
-pub enum Light {
-    CockpitGearInd,
-    AntiCol,
-    Strobe,
-    PositionPort,
-    PositionStarboard,
-    PositionRear,
-    Formation,
-    Landing,
-    Custom(String),
+pub struct Light {
+    name: String,
+    on: bool,
 }
 
 impl Light {
-    pub fn is_on(&self) {}
-}
+    pub fn is_on(&self) -> bool {
+        self.on
+    }
 
-impl Light {
+    /// Returns the identifier of the light
+    pub fn name(&self) -> String {
+        self.name.clone()
+    }
+
+    pub fn toggle(&mut self) {
+        self.on ^= true
+    }
+
     pub fn update_mesh_lights(
         aircraft: Single<&Aircraft>,
         material_handles: Query<(&MeshMaterial3d<StandardMaterial>, &Light, Entity)>,
         mut materials: ResMut<Assets<StandardMaterial>>,
-        timer: ResMut<LightsTimers>,
     ) {
         for material_handle in material_handles.iter() {
             if let Some(mut material) = materials.get_mut(material_handle.0) {
@@ -72,112 +65,18 @@ impl Light {
                     alpha: _,
                 } = material.emissive;
 
-                match material_handle.1 {
-                    Light::AntiCol => {
-                        if aircraft.lights.anti_col && timer.acol_on_cycle {
-                            *red = 100.0
-                        } else {
-                            *red = 0.0
-                        }
-                    }
-                    Light::PositionPort => {
-                        if aircraft.lights.pos {
-                            *red = 100.
-                        } else {
-                            *red = 0.0
-                        }
-                    }
-                    Light::PositionStarboard => {
-                        if aircraft.lights.pos {
-                            *green = 100.
-                        } else {
-                            *green = 0.0
-                        }
-                    }
-                    Light::PositionRear => {
-                        if aircraft.lights.pos {
-                            *red = 100.;
-                            *green = 100.;
-                            *blue = 100.
-                        } else {
-                            *red = 0.;
-                            *green = 0.;
-                            *blue = 0.
-                        }
-                    }
-                    Light::Strobe => {
-                        if aircraft.lights.strobe && timer.strobe_on_cycle {
-                            *red = 100.;
-                            *green = 100.;
-                            *blue = 100.
-                        } else {
-                            *red = 0.;
-                            *green = 0.;
-                            *blue = 0.
-                        }
-                    }
-                    Light::Formation => {
-                        if aircraft.lights.form {
-                            *red = 10.;
-                            *green = 20.;
-                            *blue = 0.
-                        } else {
-                            *red = 0.;
-                            *green = 0.;
-                            *blue = 0.
-                        }
-                    }
-                    Light::Landing => {
-                        if aircraft.lights.landing
-                            && aircraft.landing_gear == LandingGearStatus::Deployed
-                        {
-                            *red = 500.;
-                            *green = 500.;
-                            *blue = 500.
-                        } else {
-                            *red = 0.;
-                            *green = 0.;
-                            *blue = 0.
-                        }
-                    }
-                    Light::CockpitGearInd => {
-                        if aircraft.landing_gear == LandingGearStatus::Deployed {
-                            *green = 50.0
-                        } else {
-                            *red = 0.0;
-                            *green = 0.0;
-                            *blue = 0.0;
-                        }
-                    }
-                }
+                *red = 100.0;
             }
         }
     }
 
     pub fn update_lights(
         aircraft: Single<&Aircraft>,
-        timer: ResMut<LightsTimers>,
         point_light_query: Query<(&mut PointLight, &Light)>,
         spot_light_query: Query<(&mut SpotLight, &Light)>,
     ) {
         for (mut point_light, light) in point_light_query {
-            let (colour, on) = match light {
-                Light::PositionPort => (Color::linear_rgb(10.0, 0.0, 0.0), aircraft.lights.pos),
-                Light::PositionStarboard => {
-                    (Color::linear_rgb(0.0, 10.0, 0.0), aircraft.lights.pos)
-                }
-                Light::PositionRear => (Color::linear_rgb(1.0, 1.0, 1.0), aircraft.lights.pos),
-                Light::AntiCol => (
-                    Color::linear_rgb(1.0, 0.0, 0.0),
-                    (aircraft.lights.anti_col && timer.acol_on_cycle),
-                ),
-                Light::Strobe => (
-                    Color::linear_rgb(1.0, 1.0, 1.0),
-                    (aircraft.lights.strobe && timer.strobe_on_cycle),
-                ),
-
-                _ => (Color::linear_rgb(1.0, 1.0, 1.0), false),
-            };
+            let (colour, on) = (Color::linear_rgb(1.0, 0.0, 0.0), true);
 
             point_light.color = colour;
 
@@ -188,13 +87,7 @@ impl Light {
             }
         }
         for (mut spot_light, light) in spot_light_query {
-            let (colour, on) = match light {
-                Light::Landing => (
-                    Color::linear_rgb(1.0, 1.0, 1.0),
-                    aircraft.lights.landing && aircraft.landing_gear == LandingGearStatus::Deployed,
-                ),
-                _ => (Color::BLACK, false),
-            };
+            let (colour, on) = (Color::linear_rgb(1.0, 0.0, 0.0), true);
 
             spot_light.color = colour;
 

@@ -16,21 +16,24 @@ mod scenery;
 mod sse;
 mod time;
 mod ui;
+mod utils;
 mod window;
 
 use crate::{
     aircraft::{
         Aircraft,
         animations::{update_control_surfaces, update_rotors},
-        buttons::{Button, ButtonMessages},
-        landing_gear::{LandingGear, LandingGearCommand, LandingGearStatus},
-        lights::{ACOL_OFF_DURATION, Light, LightsTimers, STROBE_OFF_DURATION},
+        avionics::buttons::AircraftButtonPlugin,
+        landing_gear::{LandingGear, LandingGearCommand},
+        lights::Light,
     },
+    big_space_compatibility::BigSpaceCompatibilityPlugin,
     camera::{AircraftCamera, CameraPosition, CameraSettings, rotate_sun},
     input::{ControlInputs, GamepadSettings},
     scenery::terrain::{self, TerrainCacheResource, TerrainMaterial, TerrainSettings},
     sse::Sse,
     ui::UI,
+    window::cursor::CursorPlugin,
 };
 use avian_fdm::prelude::*;
 use avian3d::prelude::*;
@@ -152,7 +155,6 @@ fn main() {
         default_plugins,
         PhysicsPlugins::default(),
         MeshPickingPlugin,
-        UI,
         AircraftFdmPlugin::default(),
         FrameTimeDiagnosticsPlugin::default(),
         DiagnosticsOverlayPlugin,
@@ -162,6 +164,8 @@ fn main() {
         SkeinPlugin::default(),
         bevy::pbr::diagnostic::MaterialAllocatorDiagnosticPlugin::<StandardMaterial>::default(),
         bevy::render::diagnostic::MeshAllocatorDiagnosticPlugin,
+        AircraftButtonPlugin,
+        (BigSpaceCompatibilityPlugin, CursorPlugin, UI),
     ))
     .add_plugins(MaterialPlugin::<
         ExtendedMaterial<StandardMaterial, TerrainMaterial>,
@@ -193,12 +197,6 @@ fn main() {
     .insert_resource(CameraSettings::default())
     .insert_resource(input::Keymap::default())
     .insert_resource(Settings::fetch())
-    .insert_resource(LightsTimers {
-        acol: Timer::from_seconds(ACOL_OFF_DURATION, TimerMode::Repeating),
-        acol_on_cycle: false,
-        strobe: Timer::from_seconds(STROBE_OFF_DURATION, TimerMode::Repeating),
-        strobe_on_cycle: false,
-    })
     .insert_resource(terrain::HttpClient(Client::new()))
     .insert_resource(terrain::TileSemaphore(Arc::new(Semaphore::new(64))))
     .init_resource::<terrain::TerrainCacheResource>()
@@ -216,29 +214,21 @@ fn main() {
     })
     // Messages
     .add_message::<LandingGearCommand>()
-    .add_message::<ButtonMessages>()
     .add_message::<ResetMessage>()
     // Systems
     .add_systems(Startup, setup)
     .add_systems(
         Update,
         (
-            Button::press_system,
             track_aircraft_terrain,
             update_rotors,
             input::input_system,
-            aircraft::buttons::update_cursor,
             window::trigger_screenshot,
             AircraftCamera::controller,
             terrain::poll_terrain,
             track_resets,
-        ),
-    )
-    .add_systems(
-        FixedPostUpdate,
-        (
-            big_space_compatibility::sync_to_avian.in_set(PhysicsSystems::Prepare),
-            big_space_compatibility::sync_from_avian.in_set(TransformSystems::Propagate),
+            utils::DespawnAfter::tick_despawn_after_timers,
+            window::toggle_fullscreen,
         ),
     )
     .add_systems(
@@ -246,12 +236,10 @@ fn main() {
         (
             physics::planet_gravity,
             update_control_surfaces,
-            Light::update_light_cycle,
-            (Light::update_mesh_lights, Light::update_lights).after(Light::update_light_cycle),
+            (Light::update_mesh_lights, Light::update_lights),
             LandingGear::operate_landing_gear.run_if(in_state(SimState::Running)),
             window::screenshot_saving,
             aircraft::screens::update_screens,
-            Button::listener,
             rotate_sun,
             game_state,
         ),
@@ -296,14 +284,14 @@ fn track_aircraft_terrain(
     mut registry: ResMut<terrain::TerrainChunkRegistry>,
     mut tracker: ResMut<terrain::TerrainUpdateTracker>,
     mut settings: ResMut<Settings>,
-    cache: Res<terrain::TerrainCacheResource>,
+    terrain_cache: Res<terrain::TerrainCacheResource>,
     client: Res<terrain::HttpClient>,
     semaphore: Res<terrain::TileSemaphore>,
-    aircraft: Single<(&CellCoord, &Transform), With<Aircraft>>,
+    mut aircraft: Single<(&CellCoord, &Transform), With<Aircraft>>,
     reset_messages: MessageReader<ResetMessage>,
 ) {
     let override_update = !reset_messages.is_empty();
-    let (cell_coord, transform) = *aircraft;
+    let (cell_coord, transform) = &mut *aircraft;
     let reference_pos = absolute_position(cell_coord, transform.translation).as_vec3();
 
     settings.terrain = terrain::update_terrain_for_aircraft(
@@ -313,7 +301,7 @@ fn track_aircraft_terrain(
         &mut tracker,
         &client.0,
         Arc::clone(&semaphore.0),
-        cache.cache.clone(),
+        terrain_cache.cache.clone(),
         settings.terrain,
         reference_pos,
         override_update,

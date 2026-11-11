@@ -14,6 +14,13 @@ use bevy::{
 };
 use core::convert::Into;
 
+mod menu;
+pub mod notifications;
+
+pub const UI_SCALE: f32 = 1.0;
+pub const TEXT_FONT: &'static str = "fonts/mozilla.ttf";
+pub const TITLE_FONT: &'static str = "fonts/mozilla.ttf";
+
 #[derive(Component)]
 pub struct MenuCamera;
 
@@ -377,8 +384,7 @@ impl Plugin for UI {
             .add_systems(
                 Update,
                 Self::update_ui_hud.run_if(in_state(AppState::InGame)),
-            )
-            .add_systems(FixedUpdate, toggle_fullscreen);
+            );
     }
 }
 

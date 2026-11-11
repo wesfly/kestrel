@@ -65,4 +65,5 @@ fn fly_by_wire(fbw: Res<FlyByWire>, input: Res<FbwControlInputs>) {
     let arg = fbw.lua.to_value(&input.into_inner()).unwrap();
     let ret: LuaValue = fbw.process.call(arg).unwrap();
     let result: LuaResult<FbwOutput> = fbw.lua.from_value(ret);
+    info!("{result:?}");
 }

@@ -48,8 +48,11 @@ serde_json = "1.0.150"
 tokio = { version = "1.53.0", features = ["full"] }
 earcut = "0.4.11"
 bevy_skein = "0.7.0"
-mlua = { version = "0.12.2", features = ["lua54", "serde"] }
+mlua = { version = "0.12.2", features = ["lua54", "serde", "send"] }
 chrono-tz = "0.10.4"
+lazy_static = "1.5.1"
+tzf-rs = "2.3.0"
+toml = "1.2.1"
 
 [lints.clippy]
 all = { level = "allow", priority = -2 }

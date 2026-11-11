@@ -6,10 +6,10 @@ use serde::Deserialize;
 #[reflect(Component)]
 pub enum ControlSurfaces {
     Rudder,
-    ElevatorPort,
-    ElevatorStarboard,
-    AileronPort,
-    AileronStarboard,
+    ElevatorLeft,
+    ElevatorRight,
+    AileronLeft,
+    AileronRight,
     Custom(String),
 }
 

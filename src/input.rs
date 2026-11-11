@@ -1,13 +1,13 @@
 use crate::{
     CameraSettings, GameState, Settings,
-    aircraft::buttons::{ButtonMessages, InterfaceOperation},
+    aircraft::avionics::buttons::{ButtonAction, TriggerAction},
     camera::CameraView,
     ui::UIMessage,
 };
 use bevy::prelude::*;
 use serde::{Deserialize, Serialize};
 
-#[derive(Resource)]
+#[derive(Resource, Serialize)]
 pub struct ControlInputs {
     pub pitch: f32,
     pub yaw: f32,
@@ -97,7 +97,7 @@ pub fn input_system(
     keyboard_input: Res<'_, ButtonInput<KeyCode>>,
     gp: Option<Single<&bevy::prelude::Gamepad>>,
     mut camera_settings: ResMut<CameraSettings>,
-    mut button_messages: MessageWriter<ButtonMessages>,
+    mut trigger_actions: MessageWriter<TriggerAction>,
     mut game_state: ResMut<GameState>,
     mut messages: MessageWriter<UIMessage>,
 ) {
@@ -120,26 +120,32 @@ pub fn input_system(
         }
 
         if keyboard_input.just_pressed(keymap.toggle_gear) {
-            button_messages.write(ButtonMessages(InterfaceOperation::LdgGear));
+            trigger_actions.write(TriggerAction(ButtonAction::LandingGear));
         }
         if keyboard_input.just_pressed(keymap.formation_lights) {
-            button_messages.write(ButtonMessages(InterfaceOperation::FormationLt));
+            trigger_actions.write(TriggerAction(ButtonAction::Script(String::from(
+                "lights.formation",
+            ))));
         }
         if keyboard_input.just_pressed(keymap.strobe_lights) {
-            button_messages.write(ButtonMessages(InterfaceOperation::StrobeLt));
+            trigger_actions.write(TriggerAction(ButtonAction::Script("lights.strobe".into())));
         }
         if keyboard_input.just_pressed(keymap.pos_lights) {
-            button_messages.write(ButtonMessages(InterfaceOperation::PositionLt));
+            trigger_actions.write(TriggerAction(ButtonAction::Script(
+                "lights.position".into(),
+            )));
         }
         if keyboard_input.just_pressed(keymap.anti_col_lights) {
-            button_messages.write(ButtonMessages(InterfaceOperation::AntiColLt));
+            trigger_actions.write(TriggerAction(ButtonAction::Script(
+                "lights.anti_collision".into(),
+            )));
         }
         if keyboard_input.just_pressed(keymap.engine) {
-            button_messages.write(ButtonMessages(InterfaceOperation::Engine));
+            trigger_actions.write(TriggerAction(ButtonAction::Engine));
         }
 
         if keyboard_input.just_pressed(keymap.parking_brake) {
-            button_messages.write(ButtonMessages(InterfaceOperation::ParkBrk));
+            trigger_actions.write(TriggerAction(ButtonAction::ParkingBrake));
         }
         if keyboard_input.pressed(keymap.ground_brake) {
             input.ground_brakes = input.ground_brakes.lerp(1.0, 0.1);

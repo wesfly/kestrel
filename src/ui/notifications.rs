@@ -1,5 +1,6 @@
-use crate::DespawnAfter;
 use bevy::prelude::*;
+
+use crate::utils::DespawnAfter;
 
 pub struct NotificationPlugin;
 impl Plugin for NotificationPlugin {
