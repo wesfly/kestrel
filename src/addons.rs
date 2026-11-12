@@ -23,7 +23,8 @@ const CONFIG_FILE: &str = "config.toml";
 pub struct AddonsPlugin;
 impl Plugin for AddonsPlugin {
     fn build(&self, app: &mut App) {
-        app.add_systems(Startup, load_addons);
+        app.insert_resource(Addons::default())
+            .add_systems(Startup, load_addons);
     }
 }
 
