@@ -4,7 +4,7 @@ use crate::{
     input::ControlInputs,
 };
 use avian3d::dynamics::rigid_body::LinearVelocity;
-use bevy::{math::DVec3, prelude::*};
+use bevy::prelude::*;
 
 #[derive(Component)]
 pub enum UiHud {
