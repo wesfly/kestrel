@@ -418,5 +418,8 @@ fn fly_button() -> impl Scene {
 impl Menu {
     pub fn spawn(mut commands: Commands, addons: Res<Addons>) {
         commands.spawn_scene(ui_root(addons));
+
+        // Spawn menu camera
+        commands.spawn((Camera2d::default(), DespawnOnExit(AppState::Menu)));
     }
 }
