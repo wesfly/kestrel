@@ -60,8 +60,8 @@
             export VULKAN_SDK="${vulkan-sdk}"
             export LIBCLANG_PATH="${pkgs.llvmPackages.libclang.lib}/lib"
             export BINDGEN_EXTRA_CLANG_ARGS="$NIX_CFLAGS_COMPILE -isystem ${pkgs.glibc.dev}/include"
-            export RUSTFLAGS="-C link-arg=-fuse-ld=mold"
             export RUST_SRC_PATH="${rustToolchain}/lib/rustlib/src/rust/library"
+            export RUSTFLAGS="-C link-arg=-fuse-ld=mold"
             if [ -f /run/opengl-driver/share/vulkan/icd.d/nvidia_icd.json ]; then
               export VK_ICD_FILENAMES=/run/opengl-driver/share/vulkan/icd.d/nvidia_icd.json
             elif [ -f /run/opengl-driver/share/vulkan/icd.d/nvidia.json ]; then
