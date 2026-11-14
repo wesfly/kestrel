@@ -315,10 +315,10 @@ fn location_menu() -> impl Scene {
                                     let mut checkbox = commands.entity(change.source);
                                     if change.value {
                                         checkbox.insert(Checked);
-                                        settings.buildings_enabled = true;
+                                        settings.graphics.buildings_enabled = true;
                                     } else {
                                         checkbox.remove::<Checked>();
-                                        settings.buildings_enabled = false;
+                                        settings.graphics.buildings_enabled = false;
                                     }
                                 }
                             )

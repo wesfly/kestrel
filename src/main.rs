@@ -30,8 +30,11 @@ use crate::{
     },
     big_space_compatibility::BigSpaceCompatibilityPlugin,
     camera::{AircraftCamera, CameraPosition, CameraSettings, rotate_sun},
-    input::{ControlInputs, GamepadSettings},
     scenery::terrain::{self, TerrainCacheResource, TerrainMaterial, TerrainSettings},
+    input::ControlInputs,
+    scenery::{
+        terrain::{self, TerrainCacheResource, TerrainMaterial},
+    },
     settings::{Settings, SettingsPlugin},
     sse::Sse,
     ui::UI,
