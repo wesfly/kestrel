@@ -13,6 +13,7 @@ mod camera;
 mod input;
 mod physics;
 mod scenery;
+mod settings;
 mod sse;
 mod time;
 mod ui;
@@ -31,6 +32,7 @@ use crate::{
     camera::{AircraftCamera, CameraPosition, CameraSettings, rotate_sun},
     input::{ControlInputs, GamepadSettings},
     scenery::terrain::{self, TerrainCacheResource, TerrainMaterial, TerrainSettings},
+    settings::{Settings, SettingsPlugin},
     sse::Sse,
     ui::UI,
     window::cursor::CursorPlugin,
@@ -92,47 +94,6 @@ pub fn bevy_to_aerospace_coords() -> Quat {
     Quat::from_mat3(&Mat3::from_cols(Vec3::Y, -Vec3::Z, -Vec3::X))
 }
 
-#[derive(Resource, Deserialize)]
-pub struct Settings {
-    gamepad: GamepadSettings,
-    shadow_distance: f32,
-    buildings_enabled: bool,
-    terrain: TerrainSettings,
-}
-
-impl Default for Settings {
-    fn default() -> Self {
-        Self {
-            gamepad: GamepadSettings::default(),
-            shadow_distance: 5000.0,
-            buildings_enabled: false, // Buildings are heavy to compute
-            terrain: TerrainSettings::default(),
-        }
-    }
-}
-
-impl Settings {
-    fn fetch() -> Self {
-        let json_data = match fs::read_to_string("settings.json") {
-            Ok(data) => data,
-            Err(e) => {
-                error!(
-                    "Couldn't read settings.json ({e}). Try running 'cargo run (--release)' from the project root folder."
-                );
-                return Self::default();
-            }
-        };
-        let settings: Self = match serde_json::from_str(&json_data) {
-            Ok(settings) => settings,
-            Err(e) => {
-                error!("Invalid settings.json: {e}",);
-                Self::default()
-            }
-        };
-        settings
-    }
-}
-
 #[derive(Resource)]
 pub struct GameState {
     pub running: bool,
@@ -166,6 +127,9 @@ fn main() {
         bevy::render::diagnostic::MeshAllocatorDiagnosticPlugin,
         AircraftButtonPlugin,
         (BigSpaceCompatibilityPlugin, CursorPlugin, UI),
+        (
+            SettingsPlugin,
+        ),
     ))
     .add_plugins(MaterialPlugin::<
         ExtendedMaterial<StandardMaterial, TerrainMaterial>,
@@ -196,7 +160,6 @@ fn main() {
     })
     .insert_resource(CameraSettings::default())
     .insert_resource(input::Keymap::default())
-    .insert_resource(Settings::fetch())
     .insert_resource(terrain::HttpClient(Client::new()))
     .insert_resource(terrain::TileSemaphore(Arc::new(Semaphore::new(64))))
     .init_resource::<terrain::TerrainCacheResource>()

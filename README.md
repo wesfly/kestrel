@@ -13,7 +13,7 @@ likelyhood of confusion with a file system crate.
 - Terrain with real-world elevation data (down to 1m precision), and a
   continuously updating quadtree
 - 3D cockpits with clickable buttons and screens displaying flight information
-- A settings file - `settings.json`
+- A settings file - `settings.toml`
 - 3 aircraft to fly all around the world
 - A round earth with variable sun positions
 

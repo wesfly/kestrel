@@ -1,0 +1,12 @@
+[terrain]
+coord = { lat = 0.0, lon = 0.0 }
+max_render_distance = 100000.0
+level_of_detail = 10
+
+[graphics]
+shadow_distance = 5000.0
+screen_resolution = 1024
+buildings_enabled = false
+
+[input]
+gamepad = { enabled = true, hotas = true }
