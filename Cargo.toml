@@ -8,7 +8,7 @@ license-file = "LICENSE.md"
 
 [dependencies]
 avian_fdm = {
-  git = "https://github.com/wesfly/avian_fdm",
+  git = "https://github.com/viccuad/avian_fdm.git",
   default-features = false,
   features = ["f64", "parry-f64"]
 }
