@@ -5,6 +5,7 @@ use crate::{
     },
     camera::AircraftCamera,
     scenery::terrain::{TerrainCacheResource, TerrainChunkRegistry},
+    ui::ChosenAircraft,
     utils::Coord,
 };
 use avian3d::physics_transform::Position;
@@ -27,6 +28,7 @@ pub fn setup_scene(
     mut scattering_mediums: ResMut<Assets<ScatteringMedium>>,
     mut terrain_tile_cache: ResMut<TerrainCacheResource>,
     mut terrain_registry: ResMut<TerrainChunkRegistry>,
+    chosen_aircraft: Res<ChosenAircraft>,
 ) {
     // Init/Reset tile cache
     *terrain_tile_cache = TerrainCacheResource::default();
@@ -51,17 +53,19 @@ pub fn setup_scene(
 
         let earth_medium = scattering_mediums.add(earth_medium);
         let earth_atmosphere = Atmosphere::earth(earth_medium);
-        root.spawn_spatial(earth_atmosphere.clone());
+        root.spawn_spatial((earth_atmosphere.clone(), Position::new(DVec3::default())));
 
         root.spawn_spatial((
             AircraftCamera::new(),
-            Position(DVec3::new(0.0, 6_360_010.0, 0.0)),
+            Position(DVec3::new(0.0, -6_360_010.0, 0.0)),
         ));
+
+        let aircraft = chosen_aircraft.0.clone().expect("Aircraft should exist because this function is only triggered when there is a selected aircraft.");
 
         root.spawn_spatial((
             Aircraft {
-                name: "dummy".to_string(),
-                variant: "default".to_string(),
+                name: aircraft.name,
+                variant: aircraft.variant,
                 coord: Coord::default(),
                 control_surfaces: ControlSurfacesDeflection::default(),
                 landing_gear: crate::aircraft::landing_gear::LandingGearStatus::Retracted,

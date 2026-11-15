@@ -1,16 +1,14 @@
 use crate::{
     AppState,
-    ui::{
-        hud::UiHud,
-        menu::{ChosenAircraft, Menu},
-        notifications::NotificationPlugin,
-    },
+    ui::{hud::UiHud, menu::Menu, notifications::NotificationPlugin},
 };
 use bevy::{feathers::FeathersPlugins, input_focus::InputFocus, prelude::*};
 
 mod hud;
 mod menu;
 pub mod notifications;
+
+pub use menu::ChosenAircraft;
 
 pub const UI_SCALE: f32 = 1.0;
 pub const TEXT_FONT: &'static str = "fonts/Mozilla_Text/MozillaText-VariableFont_wght.ttf";
