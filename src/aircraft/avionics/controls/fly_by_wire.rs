@@ -47,7 +47,7 @@ impl FlyByWire {
         let lua = Lua::new();
         lua.load(path).exec().unwrap_or_else(|e| {
             error!("Failed to load fly_by_wire.lua: {e}");
-            ()
+            return;
         });
 
         let process: LuaFunction = lua
