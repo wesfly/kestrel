@@ -35,3 +35,21 @@ impl DespawnAfter {
         });
     }
 }
+
+#[derive(Default, Clone, Copy, Debug, Reflect)]
+pub struct Sides<T> {
+    pub left: T,
+    pub right: T,
+}
+
+pub trait ToSides {
+    fn left_right(self) -> Sides<f32>;
+}
+impl ToSides for f32 {
+    fn left_right(self) -> Sides<f32> {
+        Sides {
+            left: self,
+            right: self,
+        }
+    }
+}

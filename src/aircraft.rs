@@ -25,7 +25,7 @@ use crate::{
         rotors::update_rotors,
     },
     scenery::terrain::pos_to_coord,
-    utils::Coord,
+    utils::{Coord, ToSides},
 };
 
 pub struct AircraftPlugin;
@@ -95,24 +95,6 @@ impl Default for Aircraft {
                 wheel_brake: 0.0,
                 lights: LightStates::default(),
             },
-        }
-    }
-}
-
-#[derive(Default, Clone, Copy, Debug, Reflect)]
-pub struct Sides<T> {
-    pub left: T,
-    pub right: T,
-}
-
-pub trait ToSides {
-    fn left_right(self) -> Sides<f32>;
-}
-impl ToSides for f32 {
-    fn left_right(self) -> Sides<f32> {
-        Sides {
-            left: self,
-            right: self,
         }
     }
 }
