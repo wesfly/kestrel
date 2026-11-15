@@ -1,4 +1,4 @@
-use crate::{SimState, addons::Addons, aircraft::Aircraft};
+use crate::{AppState, SimState, addons::Addons, aircraft::Aircraft};
 use bevy::prelude::*;
 use mlua::{
     Lua, LuaSerdeExt,
@@ -9,7 +9,11 @@ use serde::{Deserialize, Serialize};
 pub struct FlyByWirePlugin;
 impl Plugin for FlyByWirePlugin {
     fn build(&self, app: &mut App) {
-        app.add_systems(Update, FlyByWire::load).add_systems(
+        app.add_systems(
+            OnEnter(AppState::InGame),
+            FlyByWire::load.run_if(not(resource_exists::<FlyByWire>)),
+        )
+        .add_systems(
             FixedUpdate,
             fly_by_wire
                 .run_if(in_state(SimState::Running))
@@ -45,21 +49,29 @@ impl FlyByWire {
             .join("scripts/fly_by_wire.lua");
 
         let lua = Lua::new();
-        lua.load(path).exec().unwrap_or_else(|e| {
-            error!("Failed to load fly_by_wire.lua: {e}");
+        lua.load(&*path).exec().unwrap_or_else(|e| {
+            error!("Failed to load fly_by_wire.lua: {e}. Disabling fly-by-wire.");
+            commands.remove_resource::<FlyByWire>();
             return;
         });
 
-        let process: LuaFunction = lua
-            .globals()
-            .get("main")
-            .expect("lua code to have a main function");
+        let Ok(process) = lua.globals().get("main") else {
+            error!(
+                "`main` function not found in `{}`.
+                 Consider adding a `main` function to `fly_by_wire.lua`
+                ",
+                &path.display()
+            );
+            commands.remove_resource::<FlyByWire>();
+            return;
+        };
 
         commands.insert_resource(FlyByWire { lua, process });
     }
 }
 
 fn fly_by_wire(fbw: Res<FlyByWire>, input: Res<FbwControlInputs>) {
+    info!("calling");
     let arg = fbw.lua.to_value(&input.into_inner()).unwrap();
     let ret: LuaValue = fbw.process.call(arg).unwrap();
     let result: LuaResult<FbwOutput> = fbw.lua.from_value(ret);
