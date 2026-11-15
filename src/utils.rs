@@ -53,3 +53,12 @@ impl ToSides for f32 {
         }
     }
 }
+
+#[derive(Component)]
+pub struct TransformLogger;
+
+pub fn print_transforms(transforms: Query<&Transform, With<TransformLogger>>) {
+    for transform in transforms {
+        info!("Transform: {transform:#?}");
+    }
+}
