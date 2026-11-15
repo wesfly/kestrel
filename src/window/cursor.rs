@@ -5,7 +5,7 @@ use bevy::{
     window::{CursorIcon, PrimaryWindow, SystemCursorIcon},
 };
 
-use crate::aircraft::avionics::controls::Interface;
+use crate::aircraft::avionics::controls::interfaces::Interface;
 
 type Clickable = Or<(With<Button>, With<Interface>)>;
 

@@ -1,6 +1,6 @@
 use crate::{
     AppState, CameraSettings, SimState,
-    aircraft::avionics::controls::{InterfaceAction, TriggerAction},
+    aircraft::avionics::controls::{TriggerAction, interfaces::InterfaceAction},
     camera::CameraView,
     settings::Settings,
 };

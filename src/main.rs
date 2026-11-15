@@ -22,15 +22,7 @@ mod window;
 
 use crate::{
     addons::AddonsPlugin,
-    aircraft::{
-        Aircraft, AircraftPlugin,
-        animations::update_control_surfaces,
-        avionics::controls::InterfacePlugin,
-        damage::DamagePlugin,
-        landing_gear::{LandingGear, LandingGearCommand},
-        lights::Light,
-        rotors::update_rotors,
-    },
+    aircraft::{Aircraft, AircraftPlugin, animations::update_control_surfaces},
     big_space_compatibility::BigSpaceCompatibilityPlugin,
     camera::{AircraftCamera, CameraPosition, CameraSettings, rotate_sun},
     input::ControlInputs,

@@ -1,5 +1,9 @@
-use crate::aircraft::{Aircraft, Sides, control_surfaces::ControlSurfaces};
 use bevy::prelude::*;
+
+use crate::{
+    aircraft::{Aircraft, control_surfaces::ControlSurfaces},
+    utils::Sides,
+};
 
 #[derive(Component)]
 pub struct RestRotation(Quat);

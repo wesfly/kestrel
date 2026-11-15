@@ -16,7 +16,7 @@ use big_space::grid::cell::CellCoord;
 use crate::{
     SimState, absolute_position,
     aircraft::{
-        avionics::controls::{InterfacePlugin, fly_by_wire::FlyByWirePlugin},
+        avionics::controls::{fly_by_wire::FlyByWirePlugin, interfaces::InterfacePlugin},
         control_surfaces::ControlSurfacesDeflection,
         damage::DamagePlugin,
         engine::Engine,
