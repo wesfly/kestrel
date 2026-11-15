@@ -23,9 +23,12 @@
         };
 
         runtimeLibs = with pkgs; [
+          udev
+          alsa-lib
           libGL
           libclang
           libxkbcommon
+          lua5_4
           wayland
           xorg.libX11
           xorg.libXcursor
@@ -48,7 +51,6 @@
               sdl-jstest
               udev
               libudev-zero
-              alsa-lib
               vulkan-tools
               mold
               lua5_4
