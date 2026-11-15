@@ -23,7 +23,7 @@ mod window;
 use crate::{
     addons::AddonsPlugin,
     aircraft::{
-        Aircraft,
+        Aircraft, AircraftPlugin,
         animations::update_control_surfaces,
         avionics::controls::InterfacePlugin,
         damage::DamagePlugin,
@@ -128,7 +128,6 @@ fn main() {
         SkeinPlugin::default(),
         bevy::pbr::diagnostic::MaterialAllocatorDiagnosticPlugin::<StandardMaterial>::default(),
         bevy::render::diagnostic::MeshAllocatorDiagnosticPlugin,
-        InterfacePlugin,
         (
             BigSpaceCompatibilityPlugin,
             CursorPlugin,
@@ -136,8 +135,8 @@ fn main() {
             AddonsPlugin,
             GameTimePlugin,
             GravityPlugin,
-            DamagePlugin,
             SettingsPlugin,
+            AircraftPlugin,
         ),
     ))
     .add_plugins(MaterialPlugin::<
@@ -185,7 +184,6 @@ fn main() {
         transform_to_collider_scale: true,
     })
     // Messages
-    .add_message::<LandingGearCommand>()
     // Systems
     .add_systems(Startup, setup)
     .add_systems(OnEnter(AppState::InGame), setup_scene)
@@ -193,7 +191,6 @@ fn main() {
         Update,
         (
             track_aircraft_terrain,
-            update_rotors,
             input::input_system,
             window::trigger_screenshot,
             AircraftCamera::controller,
@@ -207,10 +204,7 @@ fn main() {
         (
             physics::planet_gravity,
             update_control_surfaces,
-            (Light::update_mesh_lights, Light::update_lights),
-            LandingGear::operate_landing_gear.run_if(in_state(SimState::Running)),
             window::screenshot_saving,
-            aircraft::screens::update_screens,
             rotate_sun,
             physics::sync_physics_time,
             point_accel,
