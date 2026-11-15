@@ -1,4 +1,4 @@
-use crate::{EARTH_RADIUS, TOKIO_RUNTIME, absolute_position};
+use crate::{EARTH_RADIUS, TOKIO_RUNTIME, absolute_position, utils::Coord};
 use avian3d::prelude::*;
 use bevy::{
     asset::RenderAssetUsages,
@@ -106,10 +106,7 @@ pub struct TerrainSettings {
 impl Default for TerrainSettings {
     fn default() -> Self {
         TerrainSettings {
-            coord: Coord {
-                lat: 0.0,
-                long: 0.0,
-            },
+            coord: Coord { lat: 0.0, lon: 0.0 },
             level_of_detail: 12,
             max_render_distance: 100_000.0,
         }
@@ -125,18 +122,6 @@ pub struct SpawnTerrain {
     key: NodeKey,
     cell_coord: CellCoord,
     cell_offset: Vec3,
-}
-
-#[derive(Copy, Clone, PartialEq, Deserialize, Debug, Default)]
-pub struct Coord {
-    pub lat: f32,
-    pub long: f32,
-}
-
-impl Coord {
-    pub fn from(lat: f32, long: f32) -> Self {
-        Self { lat, long }
-    }
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
@@ -520,7 +505,7 @@ fn spawn_leaf(
 /// Returns a normalized Vec3; Use `coord_to_world_pos` for absolute position.
 pub fn coord_to_pos(target_coord: Coord) -> Vec3 {
     let lat_rad = target_coord.lat.to_radians();
-    let long_rad = target_coord.long.to_radians();
+    let long_rad = target_coord.lon.to_radians();
 
     let y = lat_rad.sin();
     let x = lat_rad.cos() * long_rad.sin();
@@ -561,19 +546,19 @@ fn normal_sample_coords(coord: Coord) -> [Coord; 4] {
     [
         Coord {
             lat: (coord.lat + lat_step).clamp(-85.0, 85.0),
-            long: coord.long,
+            lon: coord.lon,
         },
         Coord {
             lat: (coord.lat - lat_step).clamp(-85.0, 85.0),
-            long: coord.long,
+            lon: coord.lon,
         },
         Coord {
             lat: coord.lat,
-            long: coord.long + long_step,
+            lon: coord.lon + long_step,
         },
         Coord {
             lat: coord.lat,
-            long: coord.long - long_step,
+            lon: coord.lon - long_step,
         },
     ]
 }
@@ -624,7 +609,7 @@ pub type TileCache = Arc<DashMap<(u8, u32, u32), TileSlot>>;
 const TILE_RETRY_COOLDOWN: Duration = Duration::from_secs(15);
 
 fn coord_to_tile(coord: Coord, n: f32) -> (u32, u32) {
-    let x = n * ((coord.long + 180.0) / 360.0);
+    let x = n * ((coord.lon + 180.0) / 360.0);
 
     let lat_rad = coord
         .lat
@@ -743,14 +728,14 @@ fn decode_elevation(pixel: image::Rgb<u8>) -> f32 {
 /// coordinates which may result in uneven slopes if sampled by the nearest
 /// pixel.
 pub fn get_height_at_coord(coord: Coord, zoom: u8, cache: &TileCache) -> f32 {
-    if coord.long < -180.0 || coord.long > 180.0 {
-        return coord.long.clamp(-180.0, 180.0);
+    if coord.lon < -180.0 || coord.lon > 180.0 {
+        return coord.lon.clamp(-180.0, 180.0);
     }
 
     let n = 2.0_f32.powf(zoom as f32);
     let max_tile = (n as u32).saturating_sub(1);
 
-    let x = n * ((coord.long + 180.0) / 360.0);
+    let x = n * ((coord.lon + 180.0) / 360.0);
     let lat_rad = coord.lat.to_radians();
     let y = (1.0 - (lat_rad.tan() + (1.0 / lat_rad.cos())).ln() / PI) / 2.0 * n;
 
@@ -1033,7 +1018,7 @@ pub fn pos_to_coord(pos: Vec3) -> Coord {
 
     let coord = Coord {
         lat: elevation,
-        long: bearing,
+        lon: bearing,
     };
     coord
 }

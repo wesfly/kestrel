@@ -12,6 +12,17 @@ pub enum Axis3D {
     Z,
 }
 
+#[derive(Copy, Clone, PartialEq, Deserialize, Debug, Default)]
+pub struct Coord {
+    pub lat: f32,
+    pub lon: f32,
+}
+
+impl Coord {
+    pub fn from(lat: f32, lon: f32) -> Self {
+        Self { lat, lon }
+    }
+}
 
 #[derive(Component)]
 pub struct DespawnAfter(pub Timer);

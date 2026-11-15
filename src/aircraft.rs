@@ -15,11 +15,12 @@ use big_space::grid::cell::CellCoord;
 
 use crate::{
     absolute_position,
-    scenery::terrain::{Coord, pos_to_coord},
     aircraft::{
         control_surfaces::ControlSurfacesDeflection, landing_gear::LandingGearStatus,
         lights::LightStates,
     },
+    scenery::terrain::pos_to_coord,
+    utils::Coord,
 };
 
 pub fn alpha_deg(velocity: &Vec3, transform: &Transform) -> f32 {
