@@ -454,10 +454,9 @@ pub fn update_terrain_for_aircraft(
     cache: TileCache,
     mut terrain: TerrainSettings,
     reference_pos: Vec3,
-    override_update: bool,
 ) -> TerrainSettings {
     if let Some(last) = tracker.last_reference_pos {
-        if last.distance(reference_pos) < MIN_UPDATE_MOVEMENT && !override_update {
+        if last.distance(reference_pos) < MIN_UPDATE_MOVEMENT {
             return terrain;
         }
     }

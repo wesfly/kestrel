@@ -1,4 +1,3 @@
-use crate::aircraft::avionics::buttons::AircraftButton;
 use bevy::{
     picking::{hover::HoverMap, pointer::PointerId},
     prelude::*,
@@ -6,7 +5,9 @@ use bevy::{
     window::{CursorIcon, PrimaryWindow, SystemCursorIcon},
 };
 
-type Clickable = Or<(With<Button>, With<AircraftButton>)>;
+use crate::aircraft::avionics::controls::Interface;
+
+type Clickable = Or<(With<Button>, With<Interface>)>;
 
 pub struct CursorPlugin;
 impl Plugin for CursorPlugin {
@@ -18,7 +19,7 @@ impl Plugin for CursorPlugin {
 pub fn update_cursor(
     hover_map: Res<HoverMap>,
     mouse: Res<ButtonInput<MouseButton>>,
-    clickable: Query<Has<AircraftButton>, Clickable>,
+    clickable: Query<Has<Interface>, Clickable>,
     parents: Query<&ChildOf>,
     window: Single<(Entity, Option<&CursorIcon>), With<PrimaryWindow>>,
     mut commands: Commands,

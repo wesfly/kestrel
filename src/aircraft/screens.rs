@@ -1,7 +1,7 @@
 use std::f32::consts::PI;
 
 use crate::{
-    EARTH_RADIUS, M_S_TO_KTS, METRES_TO_FEET,
+    EARTH_RADIUS, M_S_TO_KTS, METRES_TO_FEET, Settings,
     aircraft::{Aircraft, alpha_deg},
     input::ControlInputs,
 };
@@ -48,10 +48,11 @@ pub fn on_add_use_screen_material(
         .expect("on_add_use_screen_material requires a Screens component");
 
     let asset_server = world.resource::<AssetServer>().clone();
+    let settings = world.resource::<Settings>();
 
     let size = Extent3d {
-        width: 1024,
-        height: 1024,
+        width: settings.graphics.screen_resolution,
+        height: settings.graphics.screen_resolution,
         ..default()
     };
     let mut image = Image::new_fill(

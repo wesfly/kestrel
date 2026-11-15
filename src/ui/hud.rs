@@ -1,7 +1,6 @@
 use crate::{
-    AppState, EARTH_RADIUS,
-    aircraft::{Aircraft, acceleration::PointAccel},
-    input::ControlInputs,
+    AppState, EARTH_RADIUS, aircraft::Aircraft, input::ControlInputs,
+    utils::acceleration::PointAccel,
 };
 use avian3d::dynamics::rigid_body::LinearVelocity;
 use bevy::prelude::*;
@@ -15,7 +14,7 @@ pub enum UiHud {
 }
 
 impl UiHud {
-    pub fn setup(mut commands: Commands) {
+    pub fn spawn(mut commands: Commands) {
         commands.spawn((
             DespawnOnExit(AppState::InGame),
             Node {

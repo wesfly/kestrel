@@ -23,8 +23,9 @@ const CONFIG_FILE: &str = "config.toml";
 pub struct AddonsPlugin;
 impl Plugin for AddonsPlugin {
     fn build(&self, app: &mut App) {
-        app.insert_resource(Addons::default())
-            .add_systems(Startup, load_addons);
+        app.insert_resource(Addons::init())
+        // .add_systems(Startup, AircraftConfig::load)
+        ;
     }
 }
 
@@ -41,6 +42,31 @@ pub struct AircraftConfig {
 impl AircraftConfig {
     pub fn get_variants(&self) -> Vec<String> {
         self.variants.iter().map(|v| v.name.clone()).collect()
+    }
+    pub fn load(dir: &Path) -> Result<Self, Box<dyn Error>> {
+        let contents = fs::read_to_string(dir.join(CONFIG_FILE))?;
+        let mut config: Self = toml::from_str(&contents)?;
+
+        config.dir = dir.to_path_buf();
+        config.variants = fs::read_dir(config.dir.join("variants"))?
+            .filter_map(|entry| {
+                let path = entry
+                    .inspect_err(|e| error!("Failed to read directory entry: {e}"))
+                    .ok()?
+                    .path()
+                    .join("variant.toml");
+                let content = fs::read_to_string(&path)
+                    .inspect_err(|e| error!("Failed to find {path:?}: {e}"))
+                    .ok()?;
+                let variant: Variant = toml::from_str(&content)
+                    .inspect_err(|e| error!("Failed to serialize {path:?}: {e}"))
+                    .ok()?;
+
+                Some(variant)
+            })
+            .collect();
+
+        Ok(config)
     }
 }
 
@@ -97,34 +123,6 @@ impl ModelFileType {
     }
 }
 
-impl AircraftConfig {
-    pub fn load(dir: &Path) -> Result<Self, Box<dyn Error>> {
-        let contents = fs::read_to_string(dir.join(CONFIG_FILE))?;
-        let mut config: Self = toml::from_str(&contents)?;
-
-        config.dir = dir.to_path_buf();
-        config.variants = fs::read_dir(config.dir.join("variants"))?
-            .filter_map(|entry| {
-                let path = entry
-                    .inspect_err(|e| error!("Failed to read directory entry: {e}"))
-                    .ok()?
-                    .path()
-                    .join("variant.toml");
-                let content = fs::read_to_string(&path)
-                    .inspect_err(|e| error!("Failed to find {path:?}: {e}"))
-                    .ok()?;
-                let variant: Variant = toml::from_str(&content)
-                    .inspect_err(|e| error!("Failed to serialize {path:?}: {e}"))
-                    .ok()?;
-
-                Some(variant)
-            })
-            .collect();
-
-        Ok(config)
-    }
-}
-
 fn load_aircraft_configs(dir: impl AsRef<Path>) -> io::Result<Vec<AircraftConfig>> {
     let configs = fs::read_dir(dir)?
         .filter_map(Result::ok)
@@ -148,6 +146,11 @@ pub struct Addons {
 }
 
 impl Addons {
+    fn init() -> Addons {
+        let aircraft = load_aircraft_configs(AIRCRAFT_DIR).unwrap();
+        Addons { aircraft }
+    }
+
     pub fn find_aircraft(&self, name: &str) -> Option<&AircraftConfig> {
         self.aircraft.iter().find(|a| a.general.name == name)
     }
@@ -186,13 +189,4 @@ impl Addons {
     pub fn get_absolute_path(&self, aircraft_name: &str, variant: &str) -> PathBuf {
         format!("addons/aircraft/{aircraft_name}/variants/{variant}/").into()
     }
-}
-
-fn load_addons(mut commands: Commands) {
-    let aircraft = load_aircraft_configs(AIRCRAFT_DIR).unwrap_or_else(|err| {
-        error!("could not read {AIRCRAFT_DIR}: {err}");
-        Vec::new()
-    });
-
-    commands.insert_resource(Addons { aircraft });
 }

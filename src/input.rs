@@ -1,8 +1,8 @@
 use crate::{
-    CameraSettings, GameState, Settings,
-    aircraft::avionics::buttons::{ButtonAction, TriggerAction},
+    AppState, CameraSettings, SimState,
+    aircraft::avionics::controls::{ButtonAction, TriggerAction},
     camera::CameraView,
-    ui::UIMessage,
+    settings::Settings,
 };
 use bevy::prelude::*;
 use serde::{Deserialize, Serialize};
@@ -13,7 +13,6 @@ pub struct ControlInputs {
     pub yaw: f32,
     pub roll: f32,
     pub throttle: f32,
-    pub ground_brakes: f32, // 0.0 to 1.0
 }
 
 #[derive(Serialize, Deserialize, Clone)]
@@ -98,8 +97,10 @@ pub fn input_system(
     gp: Option<Single<&bevy::prelude::Gamepad>>,
     mut camera_settings: ResMut<CameraSettings>,
     mut trigger_actions: MessageWriter<TriggerAction>,
-    mut game_state: ResMut<GameState>,
-    mut messages: MessageWriter<UIMessage>,
+    sim_state: Res<State<SimState>>,
+    mut sim_state_mut: ResMut<NextState<SimState>>,
+    // app_state: Res<State<AppState>>,
+    mut app_state_mut: ResMut<NextState<AppState>>,
 ) {
     if keyboard_input.just_pressed(keymap.change_camera) {
         match camera_settings.view {
@@ -110,13 +111,13 @@ pub fn input_system(
     }
 
     if keyboard_input.just_pressed(keymap.menu) {
-        messages.write(UIMessage::SpawnMenu);
+        app_state_mut.set(AppState::Menu);
     }
 
     // Only read input for flight dynamics when the game is running
-    if game_state.running {
+    if *sim_state.get() == SimState::Running {
         if keyboard_input.just_pressed(keymap.pause) {
-            game_state.running = false;
+            sim_state_mut.set(SimState::Paused);
         }
 
         if keyboard_input.just_pressed(keymap.toggle_gear) {
@@ -148,12 +149,10 @@ pub fn input_system(
             trigger_actions.write(TriggerAction(ButtonAction::ParkingBrake));
         }
         if keyboard_input.pressed(keymap.ground_brake) {
-            input.ground_brakes = input.ground_brakes.lerp(1.0, 0.1);
-        } else {
-            input.ground_brakes = input.ground_brakes.lerp(0.0, 0.1);
-        };
+            // trigger_actions.write(TriggerAction(ButtonAction::WheelBrake(1.0)));
+        }
 
-        if settings.gamepad.enabled {
+        if settings.input.gamepad.enabled {
             if let Some(gamepad) = gp {
                 handle_gamepad_input(&mut input, settings, gamepad);
             } else {
@@ -163,7 +162,7 @@ pub fn input_system(
             handle_keyboard_input(keys, keymap, input);
         };
     } else if keyboard_input.just_pressed(keymap.pause) {
-        game_state.running = true;
+        sim_state_mut.set(SimState::Running);
     }
 }
 
@@ -177,10 +176,9 @@ fn handle_gamepad_input(
         roll: 0.0,
         yaw: 0.0,
         throttle: 0.0,
-        ground_brakes: 0.0,
     };
 
-    if settings.gamepad.hotas {
+    if settings.input.gamepad.hotas {
         if let (Some(x), Some(y)) = (
             gamepad.get(GamepadAxis::LeftStickX),
             gamepad.get(GamepadAxis::LeftStickY),
@@ -235,7 +233,6 @@ fn handle_keyboard_input(
         roll: 0.0,
         yaw: 0.0,
         throttle: 0.0,
-        ground_brakes: 0.0,
     };
     if keys.pressed(keymap.up) {
         button_input.pitch = -1.0

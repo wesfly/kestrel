@@ -1,5 +1,7 @@
 // TODO: Make lights scriptable in lua file
 
+use std::collections::HashMap;
+
 use crate::{MaterialStore, aircraft::Aircraft};
 use bevy::{
     ecs::{lifecycle::HookContext, world::DeferredWorld},
@@ -29,6 +31,8 @@ fn on_add_use_light_material(mut world: DeferredWorld, HookContext { entity, .. 
         .entity(entity)
         .insert(MeshMaterial3d(handle));
 }
+
+pub type LightStates = HashMap<&'static str, bool>;
 
 #[derive(Clone, PartialEq, Deserialize, Debug, Component, Reflect)]
 #[reflect(Component)]

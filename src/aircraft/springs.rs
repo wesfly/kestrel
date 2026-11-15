@@ -120,10 +120,10 @@ pub fn spring_forces(
         //============================== brakes ==============================
         if !is_nosewheel {
             let tire_speed = transform.local_x().dot(vel_at_contact_point);
-            let brake_input = if aircraft.parking_brake {
+            let brake_input = if aircraft.systems.parking_brake {
                 1.0
             } else {
-                aircraft.control_surfaces.ground_brakes
+                aircraft.systems.wheel_brake
             };
 
             let max_brake_force = normal_load * MU_BRAKE * brake_input;

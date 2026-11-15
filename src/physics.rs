@@ -4,6 +4,7 @@ use avian3d::{
         rigid_body::forces::{Forces, WriteRigidBodyForces},
     },
     physics_transform::Position,
+    schedule::{Physics, PhysicsTime},
 };
 use bevy::prelude::*;
 
@@ -23,5 +24,13 @@ pub fn planet_gravity(mut query: Query<(Forces, &Position)>) {
         let to_center = planet_center - position.0.as_vec3();
         let direction = to_center.normalize_or_zero();
         forces.apply_linear_acceleration(direction * 9.81);
+    }
+}
+
+/// Syncs `PhysicsTime` to `SimState`.
+pub fn sync_physics_time(mut physics_time: ResMut<Time<Physics>>, sim_state: Res<State<SimState>>) {
+    match **sim_state {
+        SimState::Running => physics_time.pause(),
+        SimState::Paused => physics_time.unpause(),
     }
 }

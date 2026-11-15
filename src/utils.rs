@@ -1,10 +1,17 @@
-use bevy::{
-    ecs::{
-        component::Component,
-        system::{Query, Res},
-    },
-    time::{Time, Timer},
-};
+pub mod acceleration;
+
+use bevy::prelude::*;
+use serde::Deserialize;
+
+#[derive(Reflect, Deserialize, Debug, Default, PartialEq)]
+pub enum Axis3D {
+    X,
+    /// Up
+    #[default]
+    Y,
+    Z,
+}
+
 
 #[derive(Component)]
 pub struct DespawnAfter(pub Timer);

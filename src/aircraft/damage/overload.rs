@@ -1,7 +1,8 @@
 use super::DamageCriticality;
 use crate::{
-    aircraft::{acceleration::PointAccel, damage::DamageMessage},
+    aircraft::damage::DamageMessage,
     ui::notifications::{GameNotification, GameNotificationUrgency},
+    utils::acceleration::PointAccel,
 };
 use bevy::prelude::*;
 

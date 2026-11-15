@@ -1,11 +1,11 @@
 use crate::{
     AppState, Settings,
     addons::Addons,
-    scenery::terrain::Coord,
     ui::{
         TEXT_FONT, TITLE_FONT, UI_SCALE,
         notifications::{GameNotification, GameNotificationUrgency},
     },
+    utils::Coord,
 };
 use bevy::{
     feathers::{
@@ -42,9 +42,9 @@ pub struct AircraftSelector {
 pub struct ChosenAircraft(pub Option<AircraftSelector>);
 
 fn aircraft_selector(addons: Res<Addons>) -> impl Scene {
-    let rows: Vec<_> = addons
-        .aircraft
-        .clone()
+    let aircraft_list = addons.aircraft.clone();
+
+    let rows: Vec<_> = aircraft_list
         .iter()
         .map(|a| {
             let aircraft_name = format!("{}", a.general.name);

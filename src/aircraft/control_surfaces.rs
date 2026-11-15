@@ -23,10 +23,9 @@ pub struct ControlSurface {
 /// Angles in radians
 #[derive(Default, Resource, Copy, Clone, Reflect)]
 pub struct ControlSurfacesDeflection {
+    // TODO: Remove custom control surfaces from struct
     pub canards: Sides<f32>,
     pub aileron: Sides<f32>,
     pub elevator: Sides<f32>,
     pub rudder: f32,
-    /// 0 to 1
-    pub ground_brakes: f32,
 }

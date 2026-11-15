@@ -21,23 +21,29 @@ mod utils;
 mod window;
 
 use crate::{
+    addons::AddonsPlugin,
     aircraft::{
         Aircraft,
-        animations::{update_control_surfaces, update_rotors},
-        avionics::buttons::AircraftButtonPlugin,
+        animations::update_control_surfaces,
+        avionics::controls::InterfacePlugin,
+        damage::DamagePlugin,
         landing_gear::{LandingGear, LandingGearCommand},
         lights::Light,
+        rotors::update_rotors,
     },
     big_space_compatibility::BigSpaceCompatibilityPlugin,
     camera::{AircraftCamera, CameraPosition, CameraSettings, rotate_sun},
-    scenery::terrain::{self, TerrainCacheResource, TerrainMaterial, TerrainSettings},
     input::ControlInputs,
+    physics::GravityPlugin,
     scenery::{
+        setup_scene,
         terrain::{self, TerrainCacheResource, TerrainMaterial},
     },
     settings::{Settings, SettingsPlugin},
     sse::Sse,
-    ui::UI,
+    time::GameTimePlugin,
+    ui::UiPlugin,
+    utils::acceleration::point_accel,
     window::cursor::CursorPlugin,
 };
 use avian_fdm::prelude::*;
@@ -55,8 +61,7 @@ use big_space::prelude::*;
 use core::option::Option::Some;
 use once_cell::sync::Lazy;
 use reqwest::Client;
-use serde::Deserialize;
-use std::{fs, sync::Arc};
+use std::sync::Arc;
 use tokio::{runtime::Runtime, sync::Semaphore};
 
 #[cfg(debug_assertions)]
@@ -97,11 +102,6 @@ pub fn bevy_to_aerospace_coords() -> Quat {
     Quat::from_mat3(&Mat3::from_cols(Vec3::Y, -Vec3::Z, -Vec3::X))
 }
 
-#[derive(Resource)]
-pub struct GameState {
-    pub running: bool,
-}
-
 fn main() {
     let mut app = App::new();
     let default_plugins = DefaultPlugins
@@ -128,9 +128,15 @@ fn main() {
         SkeinPlugin::default(),
         bevy::pbr::diagnostic::MaterialAllocatorDiagnosticPlugin::<StandardMaterial>::default(),
         bevy::render::diagnostic::MeshAllocatorDiagnosticPlugin,
-        AircraftButtonPlugin,
-        (BigSpaceCompatibilityPlugin, CursorPlugin, UI),
+        InterfacePlugin,
         (
+            BigSpaceCompatibilityPlugin,
+            CursorPlugin,
+            UiPlugin,
+            AddonsPlugin,
+            GameTimePlugin,
+            GravityPlugin,
+            DamagePlugin,
             SettingsPlugin,
         ),
     ))
@@ -149,17 +155,17 @@ fn main() {
     // .add_plugins(AircraftFdmDebugPlugin)
     // .add_plugins(PhysicsDebugPlugin)
     // Resources
+    .init_state::<SimState>()
+    .init_state::<AppState>()
     .insert_resource(PhysicsPickingSettings {
         require_markers: true,
     })
     .insert_resource(Gravity::ZERO)
-    .insert_resource(GameState { running: false })
     .insert_resource(ControlInputs {
         pitch: 0.0,
         yaw: 0.0,
         roll: 0.0,
         throttle: 0.0,
-        ground_brakes: 0.0,
     })
     .insert_resource(CameraSettings::default())
     .insert_resource(input::Keymap::default())
@@ -180,9 +186,9 @@ fn main() {
     })
     // Messages
     .add_message::<LandingGearCommand>()
-    .add_message::<ResetMessage>()
     // Systems
     .add_systems(Startup, setup)
+    .add_systems(OnEnter(AppState::InGame), setup_scene)
     .add_systems(
         Update,
         (
@@ -192,7 +198,6 @@ fn main() {
             window::trigger_screenshot,
             AircraftCamera::controller,
             terrain::poll_terrain,
-            track_resets,
             utils::DespawnAfter::tick_despawn_after_timers,
             window::toggle_fullscreen,
         ),
@@ -207,7 +212,8 @@ fn main() {
             window::screenshot_saving,
             aircraft::screens::update_screens,
             rotate_sun,
-            game_state,
+            physics::sync_physics_time,
+            point_accel,
         ),
     );
 
@@ -230,13 +236,6 @@ fn setup(mut commands: Commands) {
     });
 }
 
-fn game_state(mut physics_time: ResMut<Time<Physics>>, game_state: Res<GameState>) {
-    match game_state.running {
-        false => physics_time.pause(),
-        true => physics_time.unpause(),
-    }
-}
-
 pub const CELL_SIZE: f64 = 500.0;
 
 pub fn absolute_position(cell: &CellCoord, local_translation: Vec3) -> DVec3 {
@@ -254,9 +253,7 @@ fn track_aircraft_terrain(
     client: Res<terrain::HttpClient>,
     semaphore: Res<terrain::TileSemaphore>,
     mut aircraft: Single<(&CellCoord, &Transform), With<Aircraft>>,
-    reset_messages: MessageReader<ResetMessage>,
 ) {
-    let override_update = !reset_messages.is_empty();
     let (cell_coord, transform) = &mut *aircraft;
     let reference_pos = absolute_position(cell_coord, transform.translation).as_vec3();
 
@@ -270,20 +267,5 @@ fn track_aircraft_terrain(
         terrain_cache.cache.clone(),
         settings.terrain,
         reference_pos,
-        override_update,
     );
-}
-
-#[derive(Message)]
-pub struct ResetMessage;
-
-fn track_resets(
-    mut message_writer: MessageWriter<ResetMessage>,
-    game_state: Res<GameState>,
-    mut prev_running: Local<bool>,
-) {
-    if *prev_running == false && game_state.running {
-        message_writer.write(ResetMessage);
-    }
-    *prev_running = game_state.running;
 }

@@ -69,6 +69,7 @@ pub struct GameTime {
 }
 
 impl GameTime {
+    // TODO: Make change frame rate independent
     pub fn change_manually(mut time: ResMut<GameTime>, keys: Res<ButtonInput<KeyCode>>) {
         if keys.pressed(KeyCode::KeyH) {
             time.utc = time.utc.checked_sub_signed(TimeDelta::days(1)).unwrap();
@@ -92,7 +93,7 @@ impl GameTime {
     ) {
         let finder = &timezone_finder.0;
 
-        let tz_name = finder.get_tz_name(aircraft.coord.lat as f64, aircraft.coord.long as f64);
+        let tz_name = finder.get_tz_name(aircraft.coord.lat as f64, aircraft.coord.lon as f64);
 
         let parsed_tz: Tz = tz_name.parse().unwrap_or(chrono_tz::UTC);
 

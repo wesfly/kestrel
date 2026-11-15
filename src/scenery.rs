@@ -1,14 +1,20 @@
 use crate::{
     CELL_SIZE, Settings,
+    aircraft::{
+        Aircraft, Systems, control_surfaces::ControlSurfacesDeflection, lights::LightStates,
+    },
+    camera::AircraftCamera,
     scenery::terrain::{TerrainCacheResource, TerrainChunkRegistry},
-    ui::MenuCamera,
+    utils::Coord,
 };
+use avian3d::physics_transform::Position;
 use bevy::{
     light::{
         Atmosphere, CascadeShadowConfigBuilder,
         atmosphere::{Falloff, ScatteringMedium, ScatteringTerm},
         light_consts::lux,
     },
+    math::DVec3,
     prelude::*,
 };
 use big_space::prelude::*;
@@ -18,7 +24,6 @@ pub mod terrain;
 pub fn setup_scene(
     mut commands: Commands,
     settings: Res<Settings>,
-    camera: Single<Entity, With<MenuCamera>>,
     mut scattering_mediums: ResMut<Assets<ScatteringMedium>>,
     mut terrain_tile_cache: ResMut<TerrainCacheResource>,
     mut terrain_registry: ResMut<TerrainChunkRegistry>,
@@ -26,6 +31,8 @@ pub fn setup_scene(
     // Init/Reset tile cache
     *terrain_tile_cache = TerrainCacheResource::default();
     *terrain_registry = TerrainChunkRegistry::default();
+
+    info!("Spawning scene");
 
     commands.spawn_big_space(Grid::new(CELL_SIZE as f32, 10.0), |root| {
         root.insert(Visibility::default());
@@ -45,18 +52,38 @@ pub fn setup_scene(
         let earth_medium = scattering_mediums.add(earth_medium);
         let earth_atmosphere = Atmosphere::earth(earth_medium);
         root.spawn_spatial(earth_atmosphere.clone());
+
+        root.spawn_spatial((
+            AircraftCamera::new(),
+            Position(DVec3::new(0.0, 6_360_010.0, 0.0)),
+        ));
+
+        root.spawn_spatial((
+            Aircraft {
+                name: "dummy".to_string(),
+                variant: "default".to_string(),
+                coord: Coord::default(),
+                control_surfaces: ControlSurfacesDeflection::default(),
+                landing_gear: crate::aircraft::landing_gear::LandingGearStatus::Retracted,
+                on_ground: false,
+                systems: Systems {
+                    lights: LightStates::default(),
+                    parking_brake: false,
+                    wheel_brake: 0.0,
+                },
+            },
+            Position(DVec3::new(0.0, 6_360_010.0, 0.0)),
+        ));
     });
 
-    commands.entity(*camera).despawn();
-
     let cascade = CascadeShadowConfigBuilder {
-        maximum_distance: settings.shadow_distance.clamp(1.0, 100_000.0),
+        maximum_distance: settings.graphics.shadow_distance.clamp(1.0, 100_000.0),
         ..Default::default()
     }
     .build();
 
-    let sun_position = Vec3::new(1.0, 0.1, 0.0).normalize();
-    let shadows_enabled = settings.shadow_distance != 0.0;
+    let sun_position = Vec3::new(1.0, 0.0, 0.0).normalize();
+    let shadows_enabled = settings.graphics.shadow_distance != 0.0;
     if !shadows_enabled {
         info!("Shadows disabled")
     }

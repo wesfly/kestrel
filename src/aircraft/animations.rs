@@ -1,21 +1,5 @@
-use crate::aircraft::{Aircraft, RotorTypes, Sides, control_surfaces::ControlSurfaces};
+use crate::aircraft::{Aircraft, Sides, control_surfaces::ControlSurfaces};
 use bevy::prelude::*;
-
-pub fn update_rotors(
-    query: Query<(&mut Transform, &RotorTypes)>,
-    aircraft: Single<&Aircraft>,
-    time: Res<Time>,
-) {
-    // TODO include Engine component
-    if aircraft.engine.on {
-        for (mut rotor, rotor_type) in query {
-            match rotor_type {
-                RotorTypes::Main(a) => rotor.rotate_local_axis(*a, 100.0 * time.delta_secs()),
-                RotorTypes::Rear => rotor.rotate_local_z(100.0 * time.delta_secs()),
-            }
-        }
-    }
-}
 
 #[derive(Component)]
 pub struct RestRotation(Quat);
