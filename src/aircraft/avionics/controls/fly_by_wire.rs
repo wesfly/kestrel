@@ -44,8 +44,6 @@ impl FlyByWire {
             .get_absolute_path(name, variant)
             .join("scripts/fly_by_wire.lua");
 
-        info!("{path:?}");
-
         let lua = Lua::new();
         lua.load(path).exec().unwrap_or_else(|e| {
             error!("Failed to load fly_by_wire.lua: {e}");
