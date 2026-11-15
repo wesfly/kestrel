@@ -14,7 +14,6 @@ use serde::Deserialize;
     Hash
 )]
 #[reflect(Component)]
-#[type_path = "skein"]
 pub enum LandingGearElement {
     FrontLdgGear,
     FrontLdgGearDoorFront,

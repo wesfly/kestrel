@@ -11,7 +11,6 @@ use serde::Deserialize;
 
 #[derive(Debug, Component, Deserialize, PartialEq, Reflect, Default)]
 #[reflect(Component, Default)]
-#[type_path = "skein"]
 #[component(on_add = on_add_use_light_material)]
 pub struct UseLightMaterial;
 

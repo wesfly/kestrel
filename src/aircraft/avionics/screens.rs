@@ -18,7 +18,6 @@ use std::f32::consts::PI;
 
 #[derive(Deserialize, Debug, Component, Reflect, Clone, Copy)]
 #[reflect(Component)]
-#[type_path = "skein"]
 #[component(on_add = on_add_use_screen_material)]
 pub enum Screens {
     /// Left Lateral Display
