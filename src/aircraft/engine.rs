@@ -10,6 +10,7 @@ enum EngineRunningMode {
 #[derive(Component, Default, Reflect)]
 #[reflect(Component, Default)]
 pub struct Engine {
+    name: String,
     mode: EngineRunningMode,
     rpm: f32,
     full_rpm: f32,
@@ -17,14 +18,20 @@ pub struct Engine {
 }
 
 impl Engine {
-    pub fn on() -> Self {
+    pub fn name(&self) -> String {
+        self.name.clone()
+    }
+
+    pub fn on(name: String) -> Self {
         Self {
+            name,
             mode: EngineRunningMode::On,
             rpm: 0.0,
             full_rpm: 14_000.0,
             spin_up_rate: 500.0,
         }
     }
+
     pub fn get_rpm(&self) -> f32 {
         self.rpm
     }
