@@ -159,7 +159,6 @@ fn main() {
     .insert_resource(PhysicsPickingSettings {
         require_markers: true,
     })
-    .insert_resource(Gravity::ZERO)
     .insert_resource(ControlInputs {
         pitch: 0.0,
         yaw: 0.0,
