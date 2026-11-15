@@ -41,6 +41,7 @@ use crate::{
 use avian_fdm::prelude::*;
 use avian3d::prelude::*;
 use bevy::{
+    asset::io::{AssetSourceBuilder, AssetSourceId},
     dev_tools::diagnostics_overlay::DiagnosticsOverlayPlugin,
     diagnostic::FrameTimeDiagnosticsPlugin,
     feathers::{dark_theme::create_dark_theme, theme::UiTheme},
@@ -96,6 +97,13 @@ pub fn bevy_to_aerospace_coords() -> Quat {
 
 fn main() {
     let mut app = App::new();
+
+    // Register addons asset source
+    app.register_asset_source(
+        AssetSourceId::Name("addons".into()),
+        AssetSourceBuilder::platform_default("addons", Some("addons")),
+    );
+
     let default_plugins = DefaultPlugins
         .set(WindowPlugin {
             primary_window: Some(Window {

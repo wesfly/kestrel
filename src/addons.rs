@@ -23,9 +23,7 @@ const CONFIG_FILE: &str = "config.toml";
 pub struct AddonsPlugin;
 impl Plugin for AddonsPlugin {
     fn build(&self, app: &mut App) {
-        app.insert_resource(Addons::init())
-        // .add_systems(Startup, AircraftConfig::load)
-        ;
+        app.insert_resource(Addons::init());
     }
 }
 

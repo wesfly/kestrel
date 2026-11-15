@@ -24,6 +24,7 @@ pub mod terrain;
 
 pub fn setup_scene(
     mut commands: Commands,
+    asset_server: Res<AssetServer>,
     settings: Res<Settings>,
     mut scattering_mediums: ResMut<Assets<ScatteringMedium>>,
     mut terrain_tile_cache: ResMut<TerrainCacheResource>,
@@ -62,6 +63,8 @@ pub fn setup_scene(
 
         let aircraft = chosen_aircraft.0.clone().expect("Aircraft should exist because this function is only triggered when there is a selected aircraft.");
 
+        let path = format!("addons://aircraft/{}/variants/{}/models/model.gltf", aircraft.name, aircraft.variant);
+
         root.spawn_spatial((
             Aircraft {
                 name: aircraft.name,
@@ -76,6 +79,7 @@ pub fn setup_scene(
                     wheel_brake: 0.0,
                 },
             },
+            WorldAssetRoot(asset_server.load(GltfAssetLabel::Scene(0).from_asset(path))),
             Position(DVec3::new(0.0, 6_360_010.0, 0.0)),
         ));
     });
