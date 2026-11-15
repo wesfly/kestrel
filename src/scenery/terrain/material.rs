@@ -8,7 +8,7 @@ use bevy::{
     shader::ShaderRef,
 };
 
-const SHADER_ASSET_PATH: &str = "shaders/terrain.wgsl";
+const SHADER_ASSET_PATH: &str = "shaders/terrain.wesl";
 
 #[derive(Asset, TypePath, AsBindGroup, Debug, Clone)]
 pub struct TerrainMaterial {
