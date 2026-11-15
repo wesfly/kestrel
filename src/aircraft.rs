@@ -23,6 +23,7 @@ use crate::{
         landing_gear::{LandingGear, LandingGearCommand, LandingGearStatus},
         lights::{Light, LightStates},
         rotors::update_rotors,
+        springs::SpringsPlugin,
     },
     scenery::terrain::pos_to_coord,
     utils::{Coord, ToSides},
@@ -31,18 +32,23 @@ use crate::{
 pub struct AircraftPlugin;
 impl Plugin for AircraftPlugin {
     fn build(&self, app: &mut App) {
-        app.add_plugins((DamagePlugin, FlyByWirePlugin, InterfacePlugin))
-            .add_message::<LandingGearCommand>()
-            .add_systems(Update, (update_rotors, screens::update_screens))
-            .add_systems(
-                FixedUpdate,
-                (
-                    (Light::update_mesh_lights, Light::update_lights),
-                    Engine::update,
-                    LandingGear::operate_landing_gear.run_if(in_state(SimState::Running)),
-                    update_aircraft_coord,
-                ),
-            );
+        app.add_plugins((
+            DamagePlugin,
+            FlyByWirePlugin,
+            InterfacePlugin,
+            SpringsPlugin,
+        ))
+        .add_message::<LandingGearCommand>()
+        .add_systems(Update, (update_rotors, screens::update_screens))
+        .add_systems(
+            FixedUpdate,
+            (
+                (Light::update_mesh_lights, Light::update_lights),
+                Engine::update,
+                LandingGear::operate_landing_gear.run_if(in_state(SimState::Running)),
+                update_aircraft_coord,
+            ),
+        );
     }
 }
 

@@ -30,6 +30,12 @@ const MU_LATERAL: f32 = 0.8;
 const MU_BRAKE: f32 = 0.8; // dry max braking friction coefficient
 const TIRE_RELAXATION_TIME: f32 = 0.1; // s, how fast lateral slip is killed
 
+pub struct SpringsPlugin;
+impl Plugin for SpringsPlugin {
+    fn build(&self, app: &mut App) {
+        app.add_systems(FixedUpdate, spring_forces);
+    }
+}
 #[derive(Component, Reflect)]
 #[reflect(Component)]
 struct LandingGearLeg {
