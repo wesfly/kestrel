@@ -1,18 +1,21 @@
 pub mod fly_by_wire;
 
-use crate::aircraft::engine::Engine;
-use crate::aircraft::landing_gear::{LandingGearCommand, LandingGearCommands, LandingGearStatus};
-use crate::aircraft::lights::Light;
-use crate::utils::Axis3D;
-use crate::{
-    aircraft::{Aircraft, Sides, ToSides},
-    input::ControlInputs,
-};
 use bevy::picking::pointer::PointerButton;
 use bevy::prelude::*;
 use serde::Deserialize;
 
-/// This is for all aircraft not using fly-by-wire.
+use crate::{
+    aircraft::{
+        Aircraft,
+        engine::Engine,
+        landing_gear::{LandingGearCommand, LandingGearCommands, LandingGearStatus},
+        lights::Light,
+    },
+    input::ControlInputs,
+    utils::{Axis3D, Sides, ToSides},
+};
+
+/// This is  a marker for all aircraft not using fly-by-wire.
 #[derive(Component)]
 pub struct DirectControls;
 
@@ -34,11 +37,11 @@ impl DirectControls {
     }
 }
 
-/// # Control Types
+/// # Interface Types
 ///
-/// - [`Biased`](https://en.wikipedia.org/wiki/Switch#Biased_switches): A switch
-///   that is always in the same position unless actively pressed. After that it
-///   will return to its default position.
+/// - [`Biased`](https://en.wikipedia.org/wiki/Switch#Biased_switches): A
+///   button that is always in the same position unless actively pressed. After
+///   that it will return to its default position.
 /// - `Binary`: A normal toggle switch.
 /// - `MultiPosition`: Like a toggle switch, but with more than 2 positions.
 ///   ```rust,no_run
@@ -90,15 +93,15 @@ impl Default for Interface {
 }
 
 #[derive(Component, Clone, Debug, PartialEq)]
-#[require(ButtonState)]
-pub enum ButtonAction {
+#[require(InterfaceState)]
+pub enum InterfaceAction {
     Engine,
     ParkingBrake,
     LandingGear,
     Script(String),
 }
 
-impl ButtonAction {
+impl InterfaceAction {
     pub fn parse(name: &str) -> Self {
         match name {
             "engine" => Self::Engine,
@@ -137,14 +140,14 @@ impl ButtonAction {
 }
 
 #[derive(Component, Default, Clone, Copy, Debug, PartialEq)]
-pub struct ButtonState(pub bool);
+pub struct InterfaceState(pub bool);
 
 /// Rotation the mesh was authored with. Switch poses are computed relative to this.
 #[derive(Component, Clone, Copy, Debug)]
 struct RestRotation(Quat);
 
 #[derive(Message, Debug, Clone)]
-pub struct TriggerAction(pub ButtonAction);
+pub struct TriggerAction(pub InterfaceAction);
 
 #[derive(Message, Debug, Clone)]
 pub struct ScriptButtonPressed {
@@ -181,11 +184,11 @@ pub fn run_actions(
 ) {
     for TriggerAction(action) in requests.read() {
         match action {
-            ButtonAction::Engine => {
+            InterfaceAction::Engine => {
                 engines.iter_mut().for_each(|mut e| e.toggle());
             }
-            ButtonAction::ParkingBrake => aircraft.systems.parking_brake ^= true,
-            ButtonAction::LandingGear => {
+            InterfaceAction::ParkingBrake => aircraft.systems.parking_brake ^= true,
+            InterfaceAction::LandingGear => {
                 if matches!(
                     *&aircraft.landing_gear,
                     LandingGearStatus::Deployed | LandingGearStatus::Retracted
@@ -193,7 +196,7 @@ pub fn run_actions(
                     gear_commands.write(LandingGearCommand(LandingGearCommands::Toggle));
                 }
             }
-            ButtonAction::Script(name) => {
+            InterfaceAction::Script(name) => {
                 let mut split = name.split(".");
                 let Some(first) = split.next() else {
                     script_presses.write(ScriptButtonPressed { name: name.clone() });
@@ -220,9 +223,9 @@ fn init_buttons(
     new: Query<(Entity, &Interface, &Transform), Added<Interface>>,
 ) {
     for (entity, button, transform) in &new {
-        let action = ButtonAction::parse(&button.operation);
+        let action = InterfaceAction::parse(&button.operation);
 
-        if let ButtonAction::Script(name) = &action {
+        if let InterfaceAction::Script(name) = &action {
             if name.is_empty() {
                 warn!("button {entity} has no operation set");
             } else {
@@ -238,7 +241,7 @@ fn init_buttons(
 
 fn on_button_press(
     press: On<PointerPress>,
-    buttons: Query<&ButtonAction>,
+    buttons: Query<&InterfaceAction>,
     mut actions: MessageWriter<TriggerAction>,
 ) {
     if press.button != PointerButton::Primary {
@@ -252,7 +255,7 @@ fn on_button_press(
 fn sync_builtin_state(
     cockpit: Single<&Aircraft>,
     engine: Query<&Engine>,
-    mut buttons: Query<(&ButtonAction, &mut ButtonState)>,
+    mut buttons: Query<(&InterfaceAction, &mut InterfaceState)>,
     lights: Query<&Light>,
 ) {
     let aircraft = *cockpit;
@@ -264,7 +267,7 @@ fn sync_builtin_state(
             engine.iter().nth(0).unwrap_or(&Engine::default()),
             lights,
         ) {
-            state.set_if_neq(ButtonState(on));
+            state.set_if_neq(InterfaceState(on));
         }
     }
 }
@@ -276,8 +279,8 @@ fn sync_builtin_state(
 /// about local X. Set `inverse` in Blender for switches authored the other way.
 fn update_switch_visuals(
     mut buttons: Query<
-        (&Interface, &ButtonState, &RestRotation, &mut Transform),
-        Changed<ButtonState>,
+        (&Interface, &InterfaceState, &RestRotation, &mut Transform),
+        Changed<InterfaceState>,
     >,
 ) {
     const SWITCH_TRAVEL_DEG: f32 = -40.0;

@@ -1,6 +1,7 @@
-use crate::aircraft::Sides;
 use bevy::prelude::*;
 use serde::Deserialize;
+
+use crate::utils::Sides;
 
 #[derive(Debug, Deserialize, Component, Reflect)]
 #[reflect(Component)]
