@@ -1,6 +1,6 @@
 use crate::{
     AppState, CameraSettings, SimState,
-    aircraft::avionics::controls::{ButtonAction, TriggerAction},
+    aircraft::avionics::controls::{InterfaceAction, TriggerAction},
     camera::CameraView,
     settings::Settings,
 };
@@ -99,7 +99,6 @@ pub fn input_system(
     mut trigger_actions: MessageWriter<TriggerAction>,
     sim_state: Res<State<SimState>>,
     mut sim_state_mut: ResMut<NextState<SimState>>,
-    // app_state: Res<State<AppState>>,
     mut app_state_mut: ResMut<NextState<AppState>>,
 ) {
     if keyboard_input.just_pressed(keymap.change_camera) {
@@ -121,32 +120,34 @@ pub fn input_system(
         }
 
         if keyboard_input.just_pressed(keymap.toggle_gear) {
-            trigger_actions.write(TriggerAction(ButtonAction::LandingGear));
+            trigger_actions.write(TriggerAction(InterfaceAction::LandingGear));
         }
         if keyboard_input.just_pressed(keymap.formation_lights) {
-            trigger_actions.write(TriggerAction(ButtonAction::Script(String::from(
+            trigger_actions.write(TriggerAction(InterfaceAction::Script(String::from(
                 "lights.formation",
             ))));
         }
         if keyboard_input.just_pressed(keymap.strobe_lights) {
-            trigger_actions.write(TriggerAction(ButtonAction::Script("lights.strobe".into())));
+            trigger_actions.write(TriggerAction(InterfaceAction::Script(
+                "lights.strobe".into(),
+            )));
         }
         if keyboard_input.just_pressed(keymap.pos_lights) {
-            trigger_actions.write(TriggerAction(ButtonAction::Script(
+            trigger_actions.write(TriggerAction(InterfaceAction::Script(
                 "lights.position".into(),
             )));
         }
         if keyboard_input.just_pressed(keymap.anti_col_lights) {
-            trigger_actions.write(TriggerAction(ButtonAction::Script(
+            trigger_actions.write(TriggerAction(InterfaceAction::Script(
                 "lights.anti_collision".into(),
             )));
         }
         if keyboard_input.just_pressed(keymap.engine) {
-            trigger_actions.write(TriggerAction(ButtonAction::Engine));
+            trigger_actions.write(TriggerAction(InterfaceAction::Engine));
         }
 
         if keyboard_input.just_pressed(keymap.parking_brake) {
-            trigger_actions.write(TriggerAction(ButtonAction::ParkingBrake));
+            trigger_actions.write(TriggerAction(InterfaceAction::ParkingBrake));
         }
         if keyboard_input.pressed(keymap.ground_brake) {
             // trigger_actions.write(TriggerAction(ButtonAction::WheelBrake(1.0)));
