@@ -109,7 +109,7 @@ impl AircraftCamera {
 
     pub fn controller(
         mut camera: Single<
-            (&mut Transform, &mut CellCoord),
+            (&mut Transform, &mut CellCoord, &mut Exposure),
             (With<AircraftCamera>, Without<Aircraft>),
         >,
         camera_settings: Res<CameraSettings>,
@@ -123,7 +123,7 @@ impl AircraftCamera {
         mut camera_pos: ResMut<CameraPosition>,
         time: Res<Time>,
     ) {
-        let (ref mut cam_tf, ref mut cell_coord) = *camera;
+        let (ref mut cam_tf, ref mut cell_coord, ref mut exposure) = *camera;
         let (aircraft, ac_tf, ac_cell) = *aircraft;
 
         **cell_coord = *ac_cell;
@@ -244,6 +244,12 @@ impl AircraftCamera {
 
         if keyboard_input.pressed(keymap.reset_camera) {
             *camera_pos = CameraPosition::default();
+        }
+
+        if keyboard_input.pressed(keymap.increase_exposure) {
+            exposure.ev100 -= 1.1 * time.delta_secs();
+        } else if keyboard_input.pressed(keymap.decrease_exposure) {
+            exposure.ev100 += 1.1 * time.delta_secs();
         }
 
         let Projection::Perspective(perspective) = projection.as_mut() else {
