@@ -24,7 +24,7 @@ use crate::{
     addons::AddonsPlugin,
     aircraft::{Aircraft, AircraftPlugin, animations::update_control_surfaces},
     big_space_compatibility::BigSpaceCompatibilityPlugin,
-    camera::{AircraftCamera, CameraPosition, CameraSettings, rotate_sun},
+    camera::{AircraftCamera, CameraPosition, CameraSettings},
     input::ControlInputs,
     physics::GravityPlugin,
     scenery::{
@@ -42,6 +42,7 @@ use avian_fdm::prelude::*;
 use avian3d::prelude::*;
 use bevy::{
     asset::io::{AssetSourceBuilder, AssetSourceId},
+    camera_controller::free_camera::FreeCameraPlugin,
     dev_tools::diagnostics_overlay::DiagnosticsOverlayPlugin,
     diagnostic::FrameTimeDiagnosticsPlugin,
     feathers::{dark_theme::create_dark_theme, theme::UiTheme},
@@ -124,7 +125,7 @@ fn main() {
         DiagnosticsOverlayPlugin,
         Sse,
         BigSpaceDefaultPlugins,
-        bevy::camera_controller::free_camera::FreeCameraPlugin,
+        FreeCameraPlugin,
         SkeinPlugin::default(),
         bevy::pbr::diagnostic::MaterialAllocatorDiagnosticPlugin::<StandardMaterial>::default(),
         bevy::render::diagnostic::MeshAllocatorDiagnosticPlugin,
@@ -182,7 +183,6 @@ fn main() {
         position_to_transform: false,
         transform_to_collider_scale: true,
     })
-    // Messages
     // Systems
     .add_systems(Startup, setup)
     .add_systems(OnEnter(AppState::InGame), setup_scene)
@@ -204,7 +204,6 @@ fn main() {
             physics::planet_gravity,
             update_control_surfaces,
             window::screenshot_saving,
-            rotate_sun,
             physics::sync_physics_time,
             point_accel,
         ),
