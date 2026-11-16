@@ -1,5 +1,6 @@
 pub mod acceleration;
 
+use avian3d::dynamics::rigid_body::{AngularVelocity, LinearVelocity};
 use bevy::prelude::*;
 use serde::Deserialize;
 
@@ -57,8 +58,12 @@ impl ToSides for f32 {
 #[derive(Component)]
 pub struct TransformLogger;
 
-pub fn print_transforms(transforms: Query<&Transform, With<TransformLogger>>) {
-    for transform in transforms {
+pub fn print_transforms(
+    transforms: Query<(&LinearVelocity, &AngularVelocity, &Transform), With<TransformLogger>>,
+) {
+    for (lin_vel, ang_vel, transform) in transforms {
         info!("Transform: {transform:#?}");
+        info!("Linear Velocity: {lin_vel:#?}");
+        info!("Angular Velocity: {ang_vel:#?}");
     }
 }
