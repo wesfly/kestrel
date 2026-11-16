@@ -1,7 +1,7 @@
 [terrain]
 coord = { lat = 0.0, lon = 0.0 }
 max_render_distance = 100000.0
-level_of_detail = 10
+level_of_detail = 12
 
 [graphics]
 shadow_distance = 5000.0
