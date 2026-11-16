@@ -10,7 +10,7 @@ use bevy::{
     prelude::*,
 };
 use big_space::prelude::*;
-use std::f32::consts::{FRAC_PI_2, PI};
+use std::f32::consts::FRAC_PI_2;
 
 #[derive(Component)]
 pub struct AircraftCamera;
@@ -265,32 +265,4 @@ impl AircraftCamera {
 
         perspective.fov = perspective.fov.clamp(0.1, std::f32::consts::FRAC_PI_2);
     }
-}
-
-// https://github.com/evroon/bevy-open-world/blob/master/crates/bevy-terrain/src/camera.rs
-pub fn rotate_sun(
-    mut suns: Query<&mut Transform, With<DirectionalLight>>,
-    time: Res<Time>,
-    keys: Res<ButtonInput<KeyCode>>,
-) {
-    let mut sun_vert_rot_factor = 0.0;
-    let mut sun_hor_rot_factor = 0.0;
-
-    if keys.pressed(KeyCode::KeyH) {
-        sun_vert_rot_factor -= 0.1;
-    }
-    if keys.pressed(KeyCode::KeyJ) {
-        sun_vert_rot_factor += 0.1;
-    }
-    if keys.pressed(KeyCode::KeyK) {
-        sun_hor_rot_factor -= 0.2;
-    }
-    if keys.pressed(KeyCode::KeyL) {
-        sun_hor_rot_factor += 0.2;
-    }
-
-    suns.iter_mut().for_each(|mut tf| {
-        tf.rotate_x(time.delta_secs() * PI * sun_vert_rot_factor);
-        tf.rotate_y(time.delta_secs() * PI * sun_hor_rot_factor)
-    });
 }
