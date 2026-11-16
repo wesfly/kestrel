@@ -63,7 +63,8 @@ pub fn alpha_deg(velocity: &Vec3, transform: &Transform) -> f32 {
     -sin.atan2(cos).to_degrees()
 }
 
-#[derive(Component, Clone)]
+#[derive(Component, Clone, Reflect)]
+#[reflect(Component)]
 pub struct Aircraft {
     pub name: String,
     pub variant: String,
@@ -74,7 +75,7 @@ pub struct Aircraft {
     pub systems: Systems,
 }
 
-#[derive(Clone)]
+#[derive(Clone, Reflect)]
 pub struct Systems {
     pub parking_brake: bool,
     /// 0.0 to 1.0

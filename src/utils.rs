@@ -13,7 +13,7 @@ pub enum Axis3D {
     Z,
 }
 
-#[derive(Copy, Clone, PartialEq, Deserialize, Debug, Default)]
+#[derive(Copy, Clone, PartialEq, Deserialize, Debug, Default, Reflect)]
 pub struct Coord {
     pub lat: f32,
     pub lon: f32,

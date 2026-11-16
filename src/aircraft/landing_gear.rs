@@ -36,7 +36,7 @@ pub enum LandingGearCommands {
 #[derive(Message)]
 pub struct LandingGearCommand(pub LandingGearCommands);
 
-#[derive(Deserialize, Debug, Default, Clone, Copy, Eq, PartialEq)]
+#[derive(Deserialize, Debug, Default, Clone, Copy, Eq, PartialEq, Reflect)]
 pub enum LandingGearStatus {
     Deploying,
     Deployed,
