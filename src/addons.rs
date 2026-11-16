@@ -27,7 +27,7 @@ impl Plugin for AddonsPlugin {
     }
 }
 
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, Deserialize, Default)]
 pub struct AircraftConfig {
     pub general: General,
     pub description: Description,
@@ -68,7 +68,7 @@ impl AircraftConfig {
     }
 }
 
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, Deserialize, Default)]
 pub struct General {
     /// The aircraft name, in lowercase letters. Has to have the same name as
     /// the folder the `config.toml` file sits in.
@@ -79,36 +79,37 @@ pub struct General {
     pub version: String,
 }
 
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, Deserialize, Default)]
 pub struct Variant {
-    name: String,
+    pub name: String,
     pub controls: Controls,
     pub model: Model,
     #[serde(skip)]
     pub dir: PathBuf,
 }
 
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, Deserialize, Default)]
 pub struct Description {
     pub name: String,
     pub description: String,
 }
 
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, Deserialize, Default)]
 pub struct Controls {
     pub fly_by_wire: bool,
 }
 
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, Deserialize, Default)]
 pub struct Model {
     pub file_ext: ModelFileType,
 }
 
 /// The 3D model formats are `.glb` and `.gltf`, other file formats aren't supported.
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, Deserialize, Default)]
 #[serde(rename_all = "lowercase")]
 pub enum ModelFileType {
     Glb,
+    #[default]
     Gltf,
 }
 

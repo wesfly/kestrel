@@ -1,6 +1,6 @@
 use crate::{
     AppState, Settings,
-    addons::Addons,
+    addons::{Addons, AircraftConfig, Variant},
     ui::{
         TEXT_FONT, TITLE_FONT, UI_SCALE,
         notifications::{GameNotification, GameNotificationUrgency},
@@ -32,10 +32,10 @@ struct LocationSelector(Coord);
 #[derive(Component, Default, Clone)]
 pub struct Menu;
 
-#[derive(Component, Clone, Debug, Default)]
+#[derive(Clone, Component, Default)]
 pub struct AircraftSelector {
-    pub name: String,
-    pub variant: String,
+    pub config: AircraftConfig,
+    pub variant: Variant,
 }
 
 #[derive(Resource)]
@@ -47,19 +47,20 @@ fn aircraft_selector(addons: Res<Addons>) -> impl Scene {
     let rows: Vec<_> = aircraft_list
         .iter()
         .map(|a| {
-            let aircraft_name = format!("{}", a.general.name);
+            let aircraft = a.clone();
 
-            // TODO make multiple variants possible
-            let variant = a
-                .get_variants()
+            // TODO: Make multiple variants possible
+            let variant = aircraft
+                .variants
                 .first()
                 .cloned()
-                .unwrap_or("default".to_string());
+                .expect("aircraft to have variants");
 
             bsn! {
                 @FeathersListRow
-                AircraftSelector {
-                    name: aircraft_name,
+                AircraftSelector
+                {
+                    config: aircraft,
                     variant
                 }
                 Node {
