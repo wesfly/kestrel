@@ -52,6 +52,10 @@ pub struct Keymap {
     formation_lights: KeyCode,
     anti_col_lights: KeyCode,
 
+    pub increase_exposure: KeyCode,
+    pub decrease_exposure: KeyCode,
+    pub screenshot: KeyCode,
+
     pause: KeyCode,
     menu: KeyCode,
 }
@@ -81,6 +85,10 @@ impl Default for Keymap {
             strobe_lights: KeyCode::Digit2,
             formation_lights: KeyCode::Digit3,
             anti_col_lights: KeyCode::Digit4,
+
+            increase_exposure: KeyCode::F9,
+            decrease_exposure: KeyCode::F10,
+            screenshot: KeyCode::F3,
 
             pause: KeyCode::KeyP,
             menu: KeyCode::Escape,
