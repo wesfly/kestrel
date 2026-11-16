@@ -6,10 +6,14 @@ use crate::{
     camera::AircraftCamera,
     scenery::terrain::{TerrainCacheResource, TerrainChunkRegistry},
     ui::ChosenAircraft,
-    utils::Coord,
+    utils::{
+        Coord,
+        // TransformLogger
+    },
 };
 use avian3d::physics_transform::Position;
 use bevy::{
+    // camera_controller::free_camera::FreeCamera,
     light::{
         Atmosphere, CascadeShadowConfigBuilder,
         atmosphere::{Falloff, ScatteringMedium, ScatteringTerm},
@@ -56,19 +60,33 @@ pub fn setup_scene(
         let earth_atmosphere = Atmosphere::earth(earth_medium);
         root.spawn_spatial((earth_atmosphere.clone(), Position::new(DVec3::default())));
 
-        root.spawn_spatial((
+        let translation = DVec3::new(0.0, 6_361_018.0, 0.0);
+        let (cell, tl) = root.grid().translation_to_grid(translation);
+
+        root.spawn((
             AircraftCamera::new(),
-            Position(DVec3::new(0.0, -6_360_010.0, 0.0)),
+            Position(translation),
+            Transform::from_translation(tl),
+            cell,
+            // TransformLogger
         ));
 
-        let aircraft = chosen_aircraft.0.clone().expect("Aircraft should exist because this function is only triggered when there is a selected aircraft.");
+        let aircraft = chosen_aircraft.0
+            .clone()
+            .expect("Aircraft should exist because this function is only triggered when there is a selected aircraft.");
 
-        let path = format!("addons://aircraft/{}/variants/{}/models/model.gltf", aircraft.name, aircraft.variant);
+        let variant = if aircraft.variant.name == "" { "default".to_string() } else { aircraft.variant.name };
+        let path = format!(
+            "addons://aircraft/{}/variants/{}/models/model.{}",
+            aircraft.config.general.name,
+            variant,
+            aircraft.variant.model.file_ext.to_str()
+        );
 
-        root.spawn_spatial((
+        root.spawn((
             Aircraft {
-                name: aircraft.name,
-                variant: aircraft.variant,
+                name: aircraft.config.description.name,
+                variant: "default".to_string(),
                 coord: Coord::default(),
                 control_surfaces: ControlSurfacesDeflection::default(),
                 landing_gear: crate::aircraft::landing_gear::LandingGearStatus::Retracted,
@@ -80,8 +98,11 @@ pub fn setup_scene(
                 },
             },
             WorldAssetRoot(asset_server.load(GltfAssetLabel::Scene(0).from_asset(path))),
-            Position(DVec3::new(0.0, 6_360_010.0, 0.0)),
+            Position(translation),
+            cell,
+            Transform::from_translation(tl),
         ));
+        info!("Spawned aircraft.")
     });
 
     let cascade = CascadeShadowConfigBuilder {
