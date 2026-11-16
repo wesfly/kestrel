@@ -35,7 +35,7 @@ use crate::{
     sse::Sse,
     time::GameTimePlugin,
     ui::UiPlugin,
-    utils::acceleration::point_accel,
+    utils::{acceleration::point_accel, print_transforms},
     window::cursor::CursorPlugin,
 };
 use avian_fdm::prelude::*;
@@ -206,6 +206,7 @@ fn main() {
             window::screenshot_saving,
             physics::sync_physics_time,
             point_accel,
+            print_transforms,
         ),
     );
 
