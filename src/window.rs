@@ -13,19 +13,12 @@ pub mod cursor;
 pub fn trigger_screenshot(
     mut commands: Commands,
     input: Res<ButtonInput<KeyCode>>,
-    mut notifications: MessageWriter<GameNotification>,
     keymap: Res<Keymap>,
 ) {
     if input.just_pressed(keymap.screenshot) {
         let now = chrono::Local::now();
         let path = format!(".user/screenshots/screenshot-{:?}.png", now);
 
-        let body = format!("Saving to {path}");
-        notifications.write(GameNotification {
-            urgency: GameNotificationUrgency::Info,
-            title: "Screenshot captured".to_string(),
-            body,
-        });
         commands
             .spawn(Screenshot::primary_window())
             .observe(save_to_disk(path));
@@ -36,6 +29,7 @@ pub fn screenshot_saving(
     mut commands: Commands,
     screenshot_saving: Query<Entity, With<Capturing>>,
     window: Single<Entity, With<Window>>,
+    mut notifications: MessageWriter<GameNotification>,
 ) {
     match screenshot_saving.iter().count() {
         0 => {
@@ -45,8 +39,14 @@ pub fn screenshot_saving(
             commands
                 .entity(*window)
                 .insert(CursorIcon::from(SystemCursorIcon::Progress));
+
+            notifications.write(GameNotification {
+                urgency: GameNotificationUrgency::Info,
+                title: "Screenshot captured".to_string(),
+                body: "Saving to the .user/screenshots folder...".to_string(),
+            });
         }
-        _ => {}
+        _ => unreachable!(),
     }
 }
 
