@@ -38,7 +38,7 @@ impl Plugin for AircraftPlugin {
             SpringsPlugin,
         ))
         .add_message::<LandingGearCommand>()
-        .add_systems(Update, (update_rotors, screens::update_screens))
+        .add_systems(Update, (update_rotors, avionics::screens::update))
         .add_systems(
             FixedUpdate,
             (
