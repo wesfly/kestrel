@@ -40,7 +40,13 @@ pub fn update_rotors(
                     continue;
                 };
 
-                engine.get_rpm()
+                let rpm = if engine.is_on() {
+                    engine.get_rpm()
+                } else {
+                    0.0
+                };
+
+                rpm
             }
         };
 
