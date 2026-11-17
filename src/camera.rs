@@ -3,6 +3,7 @@ use bevy::{
     anti_alias::taa::TemporalAntiAliasing,
     camera::{Exposure, Hdr},
     core_pipeline::tonemapping::Tonemapping,
+    ecs::{lifecycle::HookContext, world::DeferredWorld},
     input::mouse::{AccumulatedMouseMotion, MouseScrollUnit, MouseWheel},
     light::AtmosphereEnvironmentMapLight,
     pbr::{AtmosphereSettings, ScreenSpaceReflections},
@@ -12,65 +13,95 @@ use bevy::{
 use big_space::prelude::*;
 use std::f32::consts::FRAC_PI_2;
 
-#[derive(Component)]
-pub struct AircraftCamera;
-
-#[derive(Debug)]
-pub enum CameraView {
-    Cockpit,
-    Follow,
-    Tail,
+pub struct AircraftCameraPlugin;
+impl Plugin for AircraftCameraPlugin {
+    fn build(&self, app: &mut App) {
+        app.insert_resource(CurrentCameraView(0))
+            .insert_resource(CameraPositions(Vec::new()))
+            .add_systems(Update, AircraftCamera::controller);
+    }
 }
 
-#[derive(Debug, Resource)]
-pub struct CameraSettings {
-    pub orbit_distance: f32,
-    pub pitch_speed: f32,
-    pub yaw_speed: f32,
-    tail_default_position: Vec3,
-    pub view: CameraView,
-}
+/// The current camera view. `usize` is the index to the entry in `CameraPositions`.
+#[derive(Resource, PartialEq, Eq, Debug)]
+pub struct CurrentCameraView(usize);
 
-impl Default for CameraSettings {
-    fn default() -> Self {
-        Self {
-            orbit_distance: 25.0,
-            pitch_speed: 0.1,
-            yaw_speed: 0.1,
-            tail_default_position: Vec3 {
-                x: 0.0,
-                y: 4.0,
-                z: 7.0,
-            },
-            view: CameraView::Follow,
+impl CurrentCameraView {
+    pub fn next(&mut self, cam_pos_len: usize) {
+        if self.0 == cam_pos_len - 1 {
+            self.0 = 0
+        } else {
+            self.0 += 1
+        }
+    }
+    pub fn previous(&mut self, cam_pos_len: usize) {
+        if self.0 == 0 {
+            self.0 = cam_pos_len
+        } else {
+            self.0 -= 1
         }
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Component)]
+pub struct AircraftCamera {
+    pub pitch_speed: f32,
+    pub yaw_speed: f32,
+}
+
+impl Default for AircraftCamera {
+    fn default() -> Self {
+        Self {
+            pitch_speed: 0.1,
+            yaw_speed: 0.1,
+        }
+    }
+}
+
+#[derive(Debug, Default, Clone)]
 pub struct CameraRotation {
     pub yaw: f32,
     pub pitch: f32,
 }
 
-#[derive(Resource, Debug)]
+#[derive(Component, Debug, PartialEq, Default, Clone, Reflect)]
+#[reflect(Component)]
+#[component(on_add = get_camera_positions)]
 pub struct CameraPosition {
-    pub cockpit: Transform,
-    pub follow: CameraRotation,
-    pub tail: Transform,
+    name: String,
+    view_type: ViewType,
 }
 
-impl Default for CameraPosition {
-    fn default() -> Self {
-        CameraPosition {
-            cockpit: Transform::default(),
-            follow: CameraRotation {
-                yaw: std::f32::consts::PI,
-                pitch: 0.1,
-            },
-            tail: Transform::default(),
-        }
-    }
+#[derive(Debug, PartialEq, Default, Clone, Reflect)]
+pub enum ViewType {
+    Orbit(f32),
+    #[default]
+    LookFromPoint,
+}
+
+/// The Resource holding the `CameraPosition`, the transform of the camera, and
+/// the optional `Vec3`, which is the point the camera orbits around.
+#[derive(Resource)]
+pub struct CameraPositions(pub Vec<(CameraPosition, CameraRotation, Transform, Option<Vec3>)>);
+
+fn get_camera_positions(mut world: DeferredWorld, HookContext { entity, .. }: HookContext) {
+    let Some(transform) = world.entity(entity).get::<Transform>().cloned() else {
+        return;
+    };
+    let Some(cam_pos) = world.entity(entity).get::<CameraPosition>().cloned() else {
+        return;
+    };
+
+    let Some(mut cam_positions) = world.get_resource_mut::<CameraPositions>() else {
+        return;
+    };
+
+    cam_positions.0.push((
+        cam_pos,
+        CameraRotation::default(),
+        transform,
+        Some(transform.translation),
+    ));
 }
 
 impl AircraftCamera {
@@ -103,16 +134,23 @@ impl AircraftCamera {
                     samples: 2,
                 },
             ),
-            AircraftCamera,
+            AircraftCamera {
+                pitch_speed: 0.3,
+                yaw_speed: 0.3,
+            },
         )
     }
 
     pub fn controller(
         mut camera: Single<
-            (&mut Transform, &mut CellCoord, &mut Exposure),
-            (With<AircraftCamera>, Without<Aircraft>),
+            (
+                &AircraftCamera,
+                &mut Transform,
+                &mut CellCoord,
+                &mut Exposure,
+            ),
+            Without<Aircraft>,
         >,
-        camera_settings: Res<CameraSettings>,
         aircraft: Single<(&Aircraft, &Transform, &CellCoord)>,
         mouse_buttons: Res<ButtonInput<MouseButton>>,
         mouse_motion: Res<AccumulatedMouseMotion>,
@@ -120,39 +158,25 @@ impl AircraftCamera {
         keymap: Res<Keymap>,
         mut projection: Single<&mut Projection, With<AircraftCamera>>,
         mut scroll_events: MessageReader<MouseWheel>,
-        mut camera_pos: ResMut<CameraPosition>,
+        mut camera_positions: ResMut<CameraPositions>,
         time: Res<Time>,
+        current_view: Res<CurrentCameraView>,
     ) {
-        let (ref mut cam_tf, ref mut cell_coord, ref mut exposure) = *camera;
+        info!("current index: {current_view:#?}");
+        let (cam_pos, cam_rot, _cam_tf, cam_tl) =
+            camera_positions.0.get_mut(current_view.0 as usize).unwrap();
+
+        let (camera, ref mut cam_tf, ref mut cell_coord, ref mut exposure) = *camera;
         let (aircraft, ac_tf, ac_cell) = *aircraft;
 
         **cell_coord = *ac_cell;
-
-        // TODO: Add a component that marks camera positions in Blender
-        let cockpit_default_position = match aircraft.name.as_str() {
-            "h134" => Vec3 {
-                x: 0.38,
-                y: 1.2,
-                z: -2.6,
-            },
-            "j3cub" => Vec3 {
-                x: 0.2,
-                y: 0.0,
-                z: -0.5,
-            },
-            _ => Vec3 {
-                x: 2.8,
-                y: 0.0,
-                z: -1.2,
-            },
-        };
 
         let delta = mouse_motion.delta;
         let delta_pitch;
         let delta_yaw;
         if mouse_buttons.pressed(MouseButton::Right) {
-            delta_pitch = -delta.y * camera_settings.pitch_speed * time.delta_secs();
-            delta_yaw = -delta.x * camera_settings.yaw_speed * time.delta_secs();
+            delta_pitch = -delta.y * camera.pitch_speed * time.delta_secs();
+            delta_yaw = -delta.x * camera.yaw_speed * time.delta_secs();
         } else {
             delta_pitch = 0.0;
             delta_yaw = 0.0;
@@ -162,32 +186,37 @@ impl AircraftCamera {
             .normalize()
             .as_vec3();
 
-        match camera_settings.view {
-            CameraView::Cockpit => {
-                let (yaw, pitch, roll) = camera_pos.cockpit.rotation.to_euler(EulerRot::YXZ);
+        match cam_pos.view_type {
+            ViewType::LookFromPoint => {
+                let (yaw, pitch, roll) = cam_tf.rotation.to_euler(EulerRot::YXZ);
 
-                camera_pos.cockpit.rotation = Quat::from_euler(
+                cam_tf.rotation = Quat::from_euler(
                     EulerRot::YXZ,
                     yaw + delta_yaw,
                     (pitch + delta_pitch).clamp(-(FRAC_PI_2 - 0.01), FRAC_PI_2 - 0.01),
                     roll,
                 );
-                cam_tf.translation = ac_tf.translation + ac_tf.rotation * cockpit_default_position;
-                cam_tf.rotation = match aircraft.name.as_str() {
-                    "h134" => ac_tf.rotation * camera_pos.cockpit.rotation,
-                    _ => ac_tf.rotation * bevy_to_aerospace_coords() * camera_pos.cockpit.rotation,
-                };
+                cam_tf.translation = ac_tf.translation
+                    + ac_tf.rotation * cam_tl.expect("it to exist if this type is called");
+                cam_tf.rotation =
+                // = match aircraft.name.as_str() {
+                    // "h134" => ac_tf.rotation * cam_tf.rotation,
+                    // _ =>
+                     ac_tf.rotation * bevy_to_aerospace_coords() * cam_tf.rotation;
+                // ,
+                // };
             }
-            CameraView::Follow => {
-                camera_pos.follow.yaw += delta_yaw;
-                camera_pos.follow.pitch = (camera_pos.follow.pitch + delta_pitch)
-                    .clamp(-(FRAC_PI_2 - 0.01), FRAC_PI_2 - 0.01);
+            ViewType::Orbit(d) => {
+                // let (yaw, pitch, roll) = cam_tf.rotation.to_euler(EulerRot::YXZ);
+                cam_rot.yaw += delta_yaw;
+                cam_rot.pitch =
+                    (cam_rot.pitch + delta_pitch).clamp(-(FRAC_PI_2 - 0.01), FRAC_PI_2 - 0.01);
 
-                let orbit_yaw = camera_pos.follow.yaw;
-                let orbit_pitch = camera_pos.follow.pitch;
+                let orbit_yaw = cam_rot.yaw;
+                let orbit_pitch = cam_rot.pitch;
 
                 let aircraft_forward = match aircraft.name.as_str() {
-                    "h134" => ac_tf.rotation * Vec3::Z,
+                    // "h134" => ac_tf.rotation * Vec3::Z,
                     _ => -(ac_tf.rotation * Vec3::X),
                 };
 
@@ -211,39 +240,13 @@ impl AircraftCamera {
                         .normalize()
                 };
 
-                cam_tf.translation = ac_tf.translation + orbit_dir * camera_settings.orbit_distance;
+                cam_tf.translation = ac_tf.translation + orbit_dir * d;
                 cam_tf.look_at(ac_tf.translation, surface_up);
-            }
-            CameraView::Tail => {
-                let (yaw, pitch, roll) = camera_pos.tail.rotation.to_euler(EulerRot::YXZ);
-
-                camera_pos.tail.rotation = Quat::from_euler(
-                    EulerRot::YXZ,
-                    yaw + delta_yaw,
-                    (pitch + delta_pitch).clamp(-(FRAC_PI_2 - 0.01), FRAC_PI_2 - 0.01),
-                    roll,
-                );
-                cam_tf.translation = match aircraft.name.as_str() {
-                    "h134" => {
-                        ac_tf.translation + ac_tf.rotation * camera_settings.tail_default_position
-                    }
-                    _ => {
-                        ac_tf.translation
-                            + ac_tf.rotation
-                                * bevy_to_aerospace_coords()
-                                * camera_settings.tail_default_position
-                    }
-                };
-
-                cam_tf.rotation = match aircraft.name.as_str() {
-                    "h134" => ac_tf.rotation * camera_pos.tail.rotation,
-                    _ => ac_tf.rotation * bevy_to_aerospace_coords() * camera_pos.tail.rotation,
-                };
             }
         };
 
         if keyboard_input.pressed(keymap.reset_camera) {
-            *camera_pos = CameraPosition::default();
+            **cam_tf = Transform::default();
         }
 
         if keyboard_input.pressed(keymap.increase_exposure) {

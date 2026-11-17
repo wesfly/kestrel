@@ -24,7 +24,7 @@ use crate::{
     addons::AddonsPlugin,
     aircraft::{Aircraft, AircraftPlugin, animations::update_control_surfaces},
     big_space_compatibility::BigSpaceCompatibilityPlugin,
-    camera::{AircraftCamera, CameraPosition, CameraSettings},
+    camera::AircraftCameraPlugin,
     input::ControlInputs,
     physics::GravityPlugin,
     scenery::{
@@ -131,6 +131,7 @@ fn main() {
         bevy::render::diagnostic::MeshAllocatorDiagnosticPlugin,
         (
             BigSpaceCompatibilityPlugin,
+            AircraftCameraPlugin,
             CursorPlugin,
             UiPlugin,
             AddonsPlugin,
@@ -166,7 +167,6 @@ fn main() {
         roll: 0.0,
         throttle: 0.0,
     })
-    .insert_resource(CameraSettings::default())
     .insert_resource(input::Keymap::default())
     .insert_resource(terrain::HttpClient(Client::new()))
     .insert_resource(terrain::TileSemaphore(Arc::new(Semaphore::new(64))))
@@ -176,7 +176,6 @@ fn main() {
     .insert_resource(ClearColor(Color::BLACK))
     .insert_resource(TerrainCacheResource::default())
     .insert_resource(UiTheme(create_dark_theme()))
-    .insert_resource(CameraPosition::default())
     .insert_resource(avian3d::physics_transform::PhysicsTransformConfig {
         propagate_before_physics: false,
         transform_to_position: false,
@@ -192,7 +191,6 @@ fn main() {
             track_aircraft_terrain,
             input::input_system,
             window::trigger_screenshot,
-            AircraftCamera::controller,
             terrain::poll_terrain,
             utils::DespawnAfter::tick_despawn_after_timers,
             window::toggle_fullscreen,

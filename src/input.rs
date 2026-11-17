@@ -1,7 +1,7 @@
 use crate::{
-    AppState, CameraSettings, SimState,
+    AppState, SimState,
     aircraft::avionics::controls::{TriggerAction, interfaces::InterfaceAction},
-    camera::CameraView,
+    camera::{CameraPositions, CurrentCameraView},
     settings::Settings,
 };
 use bevy::prelude::*;
@@ -30,6 +30,7 @@ impl Default for GamepadSettings {
     }
 }
 
+// TODO: Find better solution for this mess
 #[derive(Resource)]
 pub struct Keymap {
     pub reset_camera: KeyCode,
@@ -103,18 +104,15 @@ pub fn input_system(
     settings: Res<Settings>,
     keyboard_input: Res<'_, ButtonInput<KeyCode>>,
     gp: Option<Single<&bevy::prelude::Gamepad>>,
-    mut camera_settings: ResMut<CameraSettings>,
+    mut current_camera_view: ResMut<CurrentCameraView>,
     mut trigger_actions: MessageWriter<TriggerAction>,
+    camera_positions: Res<CameraPositions>,
     sim_state: Res<State<SimState>>,
     mut sim_state_mut: ResMut<NextState<SimState>>,
     mut app_state_mut: ResMut<NextState<AppState>>,
 ) {
     if keyboard_input.just_pressed(keymap.change_camera) {
-        match camera_settings.view {
-            CameraView::Follow => camera_settings.view = CameraView::Cockpit,
-            CameraView::Cockpit => camera_settings.view = CameraView::Tail,
-            CameraView::Tail => camera_settings.view = CameraView::Follow,
-        }
+        current_camera_view.next(camera_positions.0.len());
     }
 
     if keyboard_input.just_pressed(keymap.menu) {
