@@ -1,4 +1,7 @@
-use crate::ui::notifications::{GameNotification, GameNotificationUrgency};
+use crate::{
+    input::Keymap,
+    ui::notifications::{GameNotification, GameNotificationUrgency},
+};
 use bevy::{
     prelude::*,
     render::view::screenshot::{Capturing, Screenshot, save_to_disk},
@@ -11,8 +14,9 @@ pub fn trigger_screenshot(
     mut commands: Commands,
     input: Res<ButtonInput<KeyCode>>,
     mut notifications: MessageWriter<GameNotification>,
+    keymap: Res<Keymap>,
 ) {
-    if input.just_pressed(KeyCode::F3) {
+    if input.just_pressed(keymap.screenshot) {
         let now = chrono::Local::now();
         let path = format!(".user/screenshots/screenshot-{:?}.png", now);
 
