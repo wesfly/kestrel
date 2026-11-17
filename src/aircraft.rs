@@ -7,7 +7,6 @@ pub mod engine;
 pub mod landing_gear;
 pub mod lights;
 pub mod rotors;
-pub mod screens;
 pub mod springs;
 
 use bevy::prelude::*;
