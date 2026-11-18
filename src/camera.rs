@@ -253,6 +253,7 @@ impl AircraftCamera {
             }
         }
 
+        // Focal length: 18 - 360 mm
         perspective.fov = perspective.fov.clamp(0.1, std::f32::consts::FRAC_PI_2);
     }
 }
