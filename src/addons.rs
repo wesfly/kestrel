@@ -38,9 +38,6 @@ pub struct AircraftConfig {
 }
 
 impl AircraftConfig {
-    pub fn get_variants(&self) -> Vec<String> {
-        self.variants.iter().map(|v| v.name.clone()).collect()
-    }
     pub fn load(dir: &Path) -> Result<Self, Box<dyn Error>> {
         let contents = fs::read_to_string(dir.join(CONFIG_FILE))?;
         let mut config: Self = toml::from_str(&contents)?;
@@ -150,33 +147,7 @@ impl Addons {
         Addons { aircraft }
     }
 
-    pub fn find_aircraft(&self, name: &str) -> Option<&AircraftConfig> {
-        self.aircraft.iter().find(|a| a.general.name == name)
-    }
-
-    pub fn get_model_path(&self, aircraft_name: &str, variant: &str) -> AssetPath<'static> {
-        // TODO wtf??
-        #[allow(clippy::expect_used)]
-        let file_ext = self
-            .find_aircraft(aircraft_name)
-            .expect("aircraft to exist because it was fetched using the Addons resource.")
-            .variants
-            .iter()
-            .find(|v| v.name == variant)
-            .with_context(|| format!("Variant misconfigured"))
-            .unwrap()
-            .model
-            .file_ext
-            .to_str();
-
-        let path = self
-            .get_asset_path(aircraft_name, variant)
-            .resolve(&AssetPath::from(format!("models/model.{file_ext}")));
-        info!("{path:?}");
-        path
-    }
-
-    pub fn get_asset_path(&self, aircraft_name: &str, variant: &str) -> AssetPath<'static> {
+    pub fn get_asset_path(aircraft_name: &str, variant: &str) -> AssetPath<'static> {
         let variant = match variant {
             "" => "default",
             v => v,
@@ -185,6 +156,20 @@ impl Addons {
         AssetPath::from(format!("aircraft/{aircraft_name}/variants/{variant}/"))
             .with_source("addons")
     }
+
+    pub fn get_model_path(aircraft_name: &str, variant: &str, model: &Model) -> AssetPath<'static> {
+        let variant = match variant {
+            "" => "default",
+            v => v,
+        };
+
+        AssetPath::from(format!(
+            "aircraft/{aircraft_name}/variants/{variant}/models/model.{}",
+            model.file_ext.to_str()
+        ))
+        .with_source("addons")
+    }
+
     pub fn get_absolute_path(&self, aircraft_name: &str, variant: &str) -> PathBuf {
         format!("addons/aircraft/{aircraft_name}/variants/{variant}/").into()
     }
