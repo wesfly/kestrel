@@ -33,7 +33,6 @@ impl Default for GamepadSettings {
 // TODO: Find better solution for this mess
 #[derive(Resource)]
 pub struct Keymap {
-    pub reset_camera: KeyCode,
     up: KeyCode,
     down: KeyCode,
     rudder_left: KeyCode,
@@ -42,7 +41,6 @@ pub struct Keymap {
     roll_right: KeyCode,
     throttle_up: KeyCode,
     throttle_down: KeyCode,
-    change_camera: KeyCode,
     toggle_gear: KeyCode,
     engine: KeyCode,
     parking_brake: KeyCode,
@@ -53,6 +51,9 @@ pub struct Keymap {
     formation_lights: KeyCode,
     anti_col_lights: KeyCode,
 
+    pub camera_next: KeyCode,
+    pub camera_previous: KeyCode,
+    pub reset_camera: KeyCode,
     pub increase_exposure: KeyCode,
     pub decrease_exposure: KeyCode,
     pub screenshot: KeyCode,
@@ -73,9 +74,6 @@ impl Default for Keymap {
             throttle_up: KeyCode::PageUp,
             throttle_down: KeyCode::PageDown,
 
-            change_camera: KeyCode::KeyC,
-            reset_camera: KeyCode::KeyR,
-
             toggle_gear: KeyCode::KeyG,
             engine: KeyCode::KeyM,
 
@@ -87,6 +85,9 @@ impl Default for Keymap {
             formation_lights: KeyCode::Digit3,
             anti_col_lights: KeyCode::Digit4,
 
+            camera_next: KeyCode::F6,
+            camera_previous: KeyCode::F5,
+            reset_camera: KeyCode::KeyR,
             increase_exposure: KeyCode::F9,
             decrease_exposure: KeyCode::F10,
             screenshot: KeyCode::F3,
@@ -111,8 +112,11 @@ pub fn input_system(
     mut sim_state_mut: ResMut<NextState<SimState>>,
     mut app_state_mut: ResMut<NextState<AppState>>,
 ) {
-    if keyboard_input.just_pressed(keymap.change_camera) {
+    if keyboard_input.just_pressed(keymap.camera_next) {
         current_camera_view.next(camera_positions.0.len());
+    }
+    if keyboard_input.just_pressed(keymap.camera_previous) {
+        current_camera_view.previous(camera_positions.0.len());
     }
 
     if keyboard_input.just_pressed(keymap.menu) {

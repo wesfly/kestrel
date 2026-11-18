@@ -28,17 +28,17 @@ pub struct CurrentCameraView(usize);
 
 impl CurrentCameraView {
     pub fn next(&mut self, cam_pos_len: usize) {
-        if self.0 == cam_pos_len - 1 {
+        if self.0 == cam_pos_len.wrapping_sub(1) {
             self.0 = 0
         } else {
-            self.0 += 1
+            self.0 = self.0.wrapping_add(1)
         }
     }
     pub fn previous(&mut self, cam_pos_len: usize) {
         if self.0 == 0 {
-            self.0 = cam_pos_len
+            self.0 = cam_pos_len.wrapping_sub(1)
         } else {
-            self.0 -= 1
+            self.0 = self.0.wrapping_sub(1)
         }
     }
 }
@@ -164,6 +164,12 @@ impl AircraftCamera {
     ) {
         let (cam_pos, cam_rot, _cam_tf, cam_tl) =
             camera_positions.0.get_mut(current_view.0 as usize).unwrap();
+        let Some((cam_pos, cam_rot, _cam_tf, cam_tl)) =
+            camera_positions.0.get_mut(current_view.0 as usize)
+        else {
+            error!("Expected aircraft to have camera positions");
+            return;
+        };
 
         let (camera, ref mut cam_tf, ref mut cell_coord, ref mut exposure) = *camera;
         let (aircraft, ac_tf, ac_cell) = *aircraft;
