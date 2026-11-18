@@ -192,10 +192,9 @@ impl AircraftCamera {
 
         match cam_pos.view_type {
             ViewType::LookFromPoint => {
-                // TODO: Needs work
                 cam_tf.translation = ac_tf.translation + ac_tf.rotation * cam_tl.clone();
 
-                cam_tf.rotate_local_y(delta_yaw);
+                cam_tf.rotate_y(delta_yaw);
                 cam_tf.rotate_local_x(delta_pitch);
             }
             ViewType::Orbit(d) => {
