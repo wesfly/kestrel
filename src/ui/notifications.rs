@@ -74,7 +74,7 @@ impl GameNotification {
         for notification in messages.read() {
             commands.spawn((
                 ChildOf(*container),
-                DespawnAfter(Timer::from_seconds(10.0, TimerMode::Once)),
+                DespawnAfter(Timer::from_seconds(5.0, TimerMode::Once)),
                 Node {
                     padding: px(10.0).all(),
                     flex_direction: FlexDirection::Column,
