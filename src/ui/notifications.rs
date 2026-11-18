@@ -1,6 +1,9 @@
 use bevy::prelude::*;
 
-use crate::utils::DespawnAfter;
+use crate::{
+    ui::fonts::{text_font_handle, title_font_handle},
+    utils::DespawnAfter,
+};
 
 pub struct NotificationPlugin;
 impl Plugin for NotificationPlugin {
@@ -66,6 +69,7 @@ impl GameNotification {
         mut commands: Commands,
         mut messages: MessageReader<GameNotification>,
         container: Single<Entity, With<NotificationContainer>>,
+        asset_server: Res<AssetServer>,
     ) {
         for notification in messages.read() {
             commands.spawn((
@@ -84,6 +88,7 @@ impl GameNotification {
                         TextColor(notification.urgency.text_color()),
                         TextFont {
                             font_size: FontSize::Px(24.0),
+                            font: title_font_handle(&asset_server),
                             ..default()
                         },
                     ),
@@ -92,6 +97,7 @@ impl GameNotification {
                         TextColor(notification.urgency.text_color()),
                         TextFont {
                             font_size: FontSize::Px(16.0),
+                            font: text_font_handle(&asset_server),
                             ..default()
                         },
                     )

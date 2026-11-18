@@ -2,7 +2,8 @@ use crate::{
     AppState, Settings,
     addons::{Addons, AircraftConfig, Variant},
     ui::{
-        TEXT_FONT, TITLE_FONT, UI_SCALE,
+        UI_SCALE,
+        fonts::{TEXT_FONT, TITLE_FONT},
         notifications::{GameNotification, GameNotificationUrgency},
     },
     utils::Coord,
