@@ -1,16 +1,13 @@
 use crate::{
     CELL_SIZE, Settings,
-    aircraft::{
-        Aircraft, Systems, control_surfaces::ControlSurfacesDeflection, lights::LightStates,
-    },
+    addons::Addons,
+    aircraft::Aircraft,
     camera::AircraftCamera,
     scenery::terrain::{TerrainCacheResource, TerrainChunkRegistry},
     ui::ChosenAircraft,
-    utils::{
-        Coord,
-        // TransformLogger
-    },
+    utils::TransformLogger,
 };
+use avian_fdm::components::{AeroZone, AircraftGeometry, EngineZone, InducedDrag};
 use avian3d::physics_transform::Position;
 use bevy::{
     // camera_controller::free_camera::FreeCamera,
@@ -75,34 +72,20 @@ pub fn setup_scene(
             .clone()
             .expect("Aircraft should exist because this function is only triggered when there is a selected aircraft.");
 
-        let variant = if aircraft.variant.name == "" { "default".to_string() } else { aircraft.variant.name };
-        let path = format!(
-            "addons://aircraft/{}/variants/{}/models/model.{}",
-            aircraft.config.general.name,
-            variant,
-            aircraft.variant.model.file_ext.to_str()
+        let model_path =
+            Addons::get_model_path(
+                &aircraft.config.general.name,
+                &aircraft.variant.name,
+                &aircraft.variant.model
         );
 
         root.spawn((
-            Aircraft {
-                name: aircraft.config.description.name,
-                variant: "default".to_string(),
-                coord: Coord::default(),
-                control_surfaces: ControlSurfacesDeflection::default(),
-                landing_gear: crate::aircraft::landing_gear::LandingGearStatus::Retracted,
-                on_ground: false,
-                systems: Systems {
-                    lights: LightStates::default(),
-                    parking_brake: false,
-                    wheel_brake: 0.0,
-                },
-            },
-            WorldAssetRoot(asset_server.load(GltfAssetLabel::Scene(0).from_asset(path))),
+            TransformLogger,
+            WorldAssetRoot(asset_server.load(GltfAssetLabel::Scene(0).from_asset(model_path))),
             Position(translation),
             cell,
             Transform::from_translation(tl),
         ));
-        info!("Spawned aircraft.")
     });
 
     let cascade = CascadeShadowConfigBuilder {
@@ -126,4 +109,48 @@ pub fn setup_scene(
         Transform::from_translation(sun_position).looking_at(Vec3::ZERO, Vec3::Y),
         cascade,
     ));
+}
+
+pub fn promote_aircraft_body(
+    mut commands: Commands,
+    newly_added_aircraft: Query<
+        (Entity, &Aircraft, &AircraftGeometry, Option<&InducedDrag>),
+        Added<Aircraft>,
+    >,
+    // ChildOf stores the parents
+    parents: Query<&ChildOf>,
+    children: Query<&Children>,
+    world_asset_roots: Query<(), With<WorldAssetRoot>>,
+    zone_marks: Query<(), Or<(With<AeroZone>, With<EngineZone>)>>,
+) {
+    for (entity, aircraft, geometry, induced_drag) in &newly_added_aircraft {
+        // Find parents with `WorldAssetRoot`
+        let Some(root) = parents
+            .iter_ancestors(entity)
+            .find(|e| world_asset_roots.contains(*e))
+        else {
+            continue;
+        };
+
+        // Clone `Aircraft` and `AircraftGeometry` onto the root
+        commands
+            .entity(root)
+            .insert((aircraft.clone(), geometry.clone()));
+        if let Some(i) = induced_drag {
+            commands.entity(root).insert(i.clone());
+        }
+
+        let zones: Vec<Entity> = children
+            .get(entity)
+            .map(|c| c.iter().filter(|e| zone_marks.contains(*e)).collect())
+            .unwrap_or_default();
+
+        for zone in zones {
+            commands.entity(zone).insert(ChildOf(root));
+        }
+
+        commands
+            .entity(entity)
+            .remove::<(Aircraft, AircraftGeometry, InducedDrag)>();
+    }
 }
