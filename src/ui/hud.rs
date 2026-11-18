@@ -1,9 +1,7 @@
-use crate::{
-    AppState, EARTH_RADIUS, aircraft::Aircraft, input::ControlInputs,
-    utils::acceleration::PointAccel,
-};
-use avian3d::dynamics::rigid_body::LinearVelocity;
+use avian_fdm::components::FlightState;
 use bevy::prelude::*;
+
+use crate::{AppState, input::ControlInputs, utils::acceleration::PointAccel};
 
 #[derive(Component)]
 pub enum UiHud {
@@ -23,7 +21,7 @@ impl UiHud {
                 left: px(10.0),
                 ..default()
             },
-            Text::new("Altitude"),
+            Text::new("Loading"),
             UiHud::Altitude,
         ));
         commands.spawn((
@@ -34,7 +32,7 @@ impl UiHud {
                 right: px(10.0),
                 ..default()
             },
-            Text::new("Throttle"),
+            Text::new("Loading"),
             UiHud::Throttle,
         ));
         commands.spawn((
@@ -45,7 +43,7 @@ impl UiHud {
                 right: px(10.0),
                 ..default()
             },
-            Text::new("Velocity"),
+            Text::new("Loading"),
             UiHud::Velocity,
         ));
 
@@ -58,31 +56,22 @@ impl UiHud {
                 left: px(10.0),
                 ..default()
             },
-            Text::new("G"),
+            Text::new("Loading"),
             UiHud::GLoad,
         ));
     }
+
     pub fn update(
         query: Query<(&mut Text, &UiHud)>,
-        aircraft: Single<(&Aircraft, &Transform, &avian3d::prelude::Position)>,
+        aircraft: Single<&FlightState>,
         input: Res<ControlInputs>,
-        vel: Single<&LinearVelocity, With<Aircraft>>,
         accels: Query<(&PointAccel, &Name)>,
     ) {
-        let (state, transform, position) = *aircraft;
+        let flight_state = *aircraft;
         for (mut text, ui_hud_component) in query {
-            let forward = match state.name.as_str() {
-                "h134" => -transform.local_z(),
-                _ => transform.local_x(),
-            };
             let string = match ui_hud_component {
                 UiHud::Altitude => {
-                    format!(
-                        "Altitude: {}m",
-                        (position.length() - EARTH_RADIUS as f64)
-                            .round()
-                            .to_string()
-                    )
+                    format!("Altitude: {}m", flight_state.altitude_m.to_string())
                 }
                 UiHud::Throttle => format!("{:.1}", input.throttle),
                 UiHud::GLoad => {
@@ -95,7 +84,7 @@ impl UiHud {
                     g_text
                 }
                 UiHud::Velocity => {
-                    format!("Velocity: {:?} km/h", (forward.dot(vel.0) * 3.6) as i32)
+                    format!("{:?} km/h", flight_state.airspeed_ms)
                 }
             };
             text.0 = string;
