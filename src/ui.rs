@@ -4,6 +4,7 @@ use crate::{
 };
 use bevy::{feathers::FeathersPlugins, input_focus::InputFocus, prelude::*};
 
+mod fonts;
 mod hud;
 mod menu;
 pub mod notifications;
@@ -11,9 +12,6 @@ pub mod notifications;
 pub use menu::ChosenAircraft;
 
 pub const UI_SCALE: f32 = 1.0;
-pub const TEXT_FONT: &'static str = "fonts/Mozilla_Text/MozillaText-VariableFont_wght.ttf";
-pub const TITLE_FONT: &'static str =
-    "fonts/Mozilla_Headline/MozillaHeadline-VariableFont_wdth,wght.ttf";
 
 pub struct UiPlugin;
 impl Plugin for UiPlugin {
