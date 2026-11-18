@@ -1,4 +1,3 @@
-use crate::{absolute_position, aircraft::Aircraft, bevy_to_aerospace_coords, input::Keymap};
 use bevy::{
     anti_alias::taa::TemporalAntiAliasing,
     camera::{Exposure, Hdr},
@@ -12,6 +11,8 @@ use bevy::{
 };
 use big_space::prelude::*;
 use std::f32::consts::FRAC_PI_2;
+
+use crate::{absolute_position, aircraft::Aircraft, input::Keymap};
 
 pub struct AircraftCameraPlugin;
 impl Plugin for AircraftCameraPlugin {
