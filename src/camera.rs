@@ -206,7 +206,6 @@ impl AircraftCamera {
                 // };
             }
             ViewType::Orbit(d) => {
-                // let (yaw, pitch, roll) = cam_tf.rotation.to_euler(EulerRot::YXZ);
                 cam_rot.yaw += delta_yaw;
                 cam_rot.pitch =
                     (cam_rot.pitch + delta_pitch).clamp(-(FRAC_PI_2 - 0.01), FRAC_PI_2 - 0.01);
@@ -214,10 +213,7 @@ impl AircraftCamera {
                 let orbit_yaw = cam_rot.yaw;
                 let orbit_pitch = cam_rot.pitch;
 
-                let aircraft_forward = match aircraft.name.as_str() {
-                    // "h134" => ac_tf.rotation * Vec3::Z,
-                    _ => -(ac_tf.rotation * Vec3::X),
-                };
+                let aircraft_forward = -(ac_tf.rotation * Vec3::X);
 
                 let flat_forward = {
                     let f = aircraft_forward - surface_up * aircraft_forward.dot(surface_up);
