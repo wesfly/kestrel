@@ -162,7 +162,6 @@ impl AircraftCamera {
         time: Res<Time>,
         current_view: Res<CurrentCameraView>,
     ) {
-        info!("current index: {current_view:#?}");
         let (cam_pos, cam_rot, _cam_tf, cam_tl) =
             camera_positions.0.get_mut(current_view.0 as usize).unwrap();
 
