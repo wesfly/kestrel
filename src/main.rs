@@ -22,7 +22,11 @@ mod window;
 
 use crate::{
     addons::AddonsPlugin,
-    aircraft::{Aircraft, AircraftPlugin, animations::update_control_surfaces},
+    aircraft::{
+        Aircraft, AircraftPlugin,
+        airfoils::{ag47ct02r, naca0010, usa35b},
+        animations::update_control_surfaces,
+    },
     big_space_compatibility::BigSpaceCompatibilityPlugin,
     camera::AircraftCameraPlugin,
     input::ControlInputs,
@@ -182,6 +186,10 @@ fn main() {
         position_to_transform: false,
         transform_to_collider_scale: true,
     })
+    // Airfoils
+    .register_airfoil("usa35b", usa35b())
+    .register_airfoil("ag47ct02r", ag47ct02r())
+    .register_airfoil("ag47ct02r", naca0010())
     // Systems
     .add_systems(Startup, setup)
     .add_systems(OnEnter(AppState::InGame), setup_scene)
