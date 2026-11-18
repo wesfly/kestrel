@@ -32,7 +32,7 @@ use crate::{
     input::ControlInputs,
     physics::GravityPlugin,
     scenery::{
-        setup_scene,
+        promote_aircraft_body, setup_scene,
         terrain::{self, TerrainCacheResource, TerrainMaterial},
     },
     settings::{Settings, SettingsPlugin},
@@ -148,17 +148,17 @@ fn main() {
     .add_plugins(MaterialPlugin::<
         ExtendedMaterial<StandardMaterial, TerrainMaterial>,
     >::default())
-    // .insert_gizmo_config(
-    //     FdmGizmos {
-    //         force_scale: 1.0 / 600.0,
-    //         total_force_color: None,
-    //         weight_color: None,
-    //         ..FdmGizmos::default()
-    //     },
-    //     GizmoConfig::default(),
-    // )
-    // .add_plugins(AircraftFdmDebugPlugin)
-    // .add_plugins(PhysicsDebugPlugin)
+    .insert_gizmo_config(
+        FdmGizmos {
+            force_scale: 1.0 / 600.0,
+            total_force_color: None,
+            weight_color: None,
+            ..FdmGizmos::default()
+        },
+        GizmoConfig::default(),
+    )
+    .add_plugins(AircraftFdmDebugPlugin)
+    .add_plugins(PhysicsDebugPlugin)
     // Resources
     .init_state::<SimState>()
     .init_state::<AppState>()
@@ -202,6 +202,7 @@ fn main() {
             terrain::poll_terrain,
             utils::DespawnAfter::tick_despawn_after_timers,
             window::toggle_fullscreen,
+            promote_aircraft_body,
         ),
     )
     .add_systems(
