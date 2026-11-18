@@ -29,10 +29,18 @@ impl Coord {
 pub struct DespawnAfter(pub Timer);
 
 impl DespawnAfter {
-    pub(super) fn tick_despawn_after_timers(mut query: Query<&mut Self>, time: Res<Time>) {
+    pub(super) fn tick_despawn_after_timers(
+        mut query: Query<(Entity, &mut Self)>,
+        time: Res<Time>,
+        mut commands: Commands,
+    ) {
         let delta = time.delta();
-        query.iter_mut().for_each(|mut t| {
+        query.iter_mut().for_each(|(entity, mut t)| {
             t.0.tick(delta);
+
+            if t.0.is_finished() {
+                commands.entity(entity).despawn();
+            }
         });
     }
 }
