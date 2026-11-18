@@ -1,17 +1,20 @@
+use bevy::prelude::*;
+
 use crate::{
     SimState,
     aircraft::damage::overload::{detect_overload, warn_on_overload},
 };
-use bevy::prelude::*;
 
 mod overload;
 
+#[allow(dead_code)]
 pub enum DamageCriticality {
     NonCritical,
     Major,
     Catastrophic,
 }
 
+#[allow(dead_code)]
 #[derive(Message)]
 pub struct DamageMessage {
     cause: &'static str,
