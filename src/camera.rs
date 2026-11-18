@@ -82,7 +82,7 @@ pub enum ViewType {
 /// The Resource holding the `CameraPosition`, the transform of the camera, and
 /// the optional `Vec3`, which is the point the camera orbits around.
 #[derive(Resource)]
-pub struct CameraPositions(pub Vec<(CameraPosition, CameraRotation, Transform, Option<Vec3>)>);
+pub struct CameraPositions(pub Vec<(CameraPosition, CameraRotation, Transform, Vec3)>);
 
 fn get_camera_positions(mut world: DeferredWorld, HookContext { entity, .. }: HookContext) {
     let Some(transform) = world.entity(entity).get::<Transform>().cloned() else {
@@ -100,7 +100,7 @@ fn get_camera_positions(mut world: DeferredWorld, HookContext { entity, .. }: Ho
         cam_pos,
         CameraRotation::default(),
         transform,
-        Some(transform.translation),
+        transform.translation,
     ));
 }
 
@@ -162,8 +162,6 @@ impl AircraftCamera {
         time: Res<Time>,
         current_view: Res<CurrentCameraView>,
     ) {
-        let (cam_pos, cam_rot, _cam_tf, cam_tl) =
-            camera_positions.0.get_mut(current_view.0 as usize).unwrap();
         let Some((cam_pos, cam_rot, _cam_tf, cam_tl)) =
             camera_positions.0.get_mut(current_view.0 as usize)
         else {
@@ -172,7 +170,7 @@ impl AircraftCamera {
         };
 
         let (camera, ref mut cam_tf, ref mut cell_coord, ref mut exposure) = *camera;
-        let (aircraft, ac_tf, ac_cell) = *aircraft;
+        let (_aircraft, ac_tf, ac_cell) = *aircraft;
 
         **cell_coord = *ac_cell;
 
@@ -193,23 +191,11 @@ impl AircraftCamera {
 
         match cam_pos.view_type {
             ViewType::LookFromPoint => {
-                let (yaw, pitch, roll) = cam_tf.rotation.to_euler(EulerRot::YXZ);
+                // TODO: Needs work
+                cam_tf.translation = ac_tf.translation + ac_tf.rotation * cam_tl.clone();
 
-                cam_tf.rotation = Quat::from_euler(
-                    EulerRot::YXZ,
-                    yaw + delta_yaw,
-                    (pitch + delta_pitch).clamp(-(FRAC_PI_2 - 0.01), FRAC_PI_2 - 0.01),
-                    roll,
-                );
-                cam_tf.translation = ac_tf.translation
-                    + ac_tf.rotation * cam_tl.expect("it to exist if this type is called");
-                cam_tf.rotation =
-                // = match aircraft.name.as_str() {
-                    // "h134" => ac_tf.rotation * cam_tf.rotation,
-                    // _ =>
-                     ac_tf.rotation * bevy_to_aerospace_coords() * cam_tf.rotation;
-                // ,
-                // };
+                cam_tf.rotate_local_y(delta_yaw);
+                cam_tf.rotate_local_x(delta_pitch);
             }
             ViewType::Orbit(d) => {
                 cam_rot.yaw += delta_yaw;
