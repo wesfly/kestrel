@@ -44,6 +44,8 @@ impl CurrentCameraView {
     }
 }
 
+/// The `AircraftCamera` component marks the aircraft camera and holds
+/// the camera settings.
 #[derive(Debug, Component)]
 pub struct AircraftCamera {
     pub pitch_speed: f32,
@@ -65,6 +67,7 @@ pub struct CameraRotation {
     pub pitch: f32,
 }
 
+/// Use this component to mark the camera view angles in Blender.
 #[derive(Component, Debug, PartialEq, Default, Clone, Reflect)]
 #[reflect(Component)]
 #[component(on_add = get_camera_positions)]
@@ -73,9 +76,14 @@ pub struct CameraPosition {
     view_type: ViewType,
 }
 
+/// Common view types
 #[derive(Debug, PartialEq, Default, Clone, Reflect)]
 pub enum ViewType {
+    /// The camera will orbit around the `Vec3` given in `CameraPositions`.
     Orbit(f32),
+
+    /// The camera looks from a point, which is taken from the `Transform`
+    /// field in `CameraPositions`
     #[default]
     LookFromPoint,
 }
@@ -85,6 +93,7 @@ pub enum ViewType {
 #[derive(Resource)]
 pub struct CameraPositions(pub Vec<(CameraPosition, CameraRotation, Transform, Vec3)>);
 
+/// Add the camera positions to the `CameraPositions` resource.
 fn get_camera_positions(mut world: DeferredWorld, HookContext { entity, .. }: HookContext) {
     let Some(transform) = world.entity(entity).get::<Transform>().cloned() else {
         return;
