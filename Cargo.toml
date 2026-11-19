@@ -63,6 +63,8 @@ unwrap_used = "warn"
 
 [lints.rust]
 unsafe_code = "forbid"
+unused_variables = "warn"
+dead_code = "warn"
 
 [profile.dev]
 opt-level = 1
