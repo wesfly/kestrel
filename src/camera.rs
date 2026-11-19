@@ -236,8 +236,10 @@ impl AircraftCamera {
                         .normalize()
                 };
 
-                cam_tf.translation = ac_tf.translation + orbit_dir * d;
-                cam_tf.look_at(ac_tf.translation, surface_up);
+                let pivot = ac_tf.translation + ac_tf.rotation * *cam_tl;
+
+                cam_tf.translation = pivot + orbit_dir * d;
+                cam_tf.look_at(pivot, surface_up);
             }
         };
 
