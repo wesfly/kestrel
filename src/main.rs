@@ -213,7 +213,7 @@ fn main() {
             window::screenshot_saving,
             physics::sync_physics_time,
             point_accel,
-            print_transforms,
+            print_transforms.run_if(in_state(SimState::Running)),
         ),
     );
 
