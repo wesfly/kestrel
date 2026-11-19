@@ -1,3 +1,4 @@
+use avian_fdm::components::PlanetResource;
 use avian3d::{
     dynamics::{
         integrator::Gravity,
@@ -6,14 +7,18 @@ use avian3d::{
     physics_transform::Position,
     schedule::{Physics, PhysicsTime},
 };
-use bevy::prelude::*;
+use bevy::{math::DVec3, prelude::*};
 
-use crate::SimState;
+use crate::{EARTH_RADIUS, SimState};
 
 pub struct GravityPlugin;
 impl Plugin for GravityPlugin {
     fn build(&self, app: &mut App) {
         app.insert_resource(Gravity::ZERO)
+            .insert_resource(PlanetResource {
+                center: DVec3::ZERO,
+                radius_m: EARTH_RADIUS as f64,
+            })
             .add_systems(Update, planet_gravity.run_if(in_state(SimState::Running)));
     }
 }
