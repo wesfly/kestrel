@@ -7,7 +7,7 @@ use crate::{
     ui::ChosenAircraft,
     utils::TransformLogger,
 };
-use avian_fdm::components::{AeroZone, AircraftGeometry, EngineZone, InducedDrag};
+use avian_fdm::components::{AeroZone, AircraftGeometry, EngineZone, FlightState, InducedDrag};
 use avian3d::physics_transform::Position;
 use bevy::{
     // camera_controller::free_camera::FreeCamera,
@@ -83,6 +83,7 @@ pub fn setup_scene(
             TransformLogger,
             WorldAssetRoot(asset_server.load(GltfAssetLabel::Scene(0).from_asset(model_path))),
             Position(translation),
+            FlightState::default(),
             cell,
             Transform::from_translation(tl),
         ));
