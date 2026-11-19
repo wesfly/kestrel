@@ -35,7 +35,7 @@ pub fn planet_gravity(mut query: Query<(Forces, &Position)>) {
 /// Syncs `PhysicsTime` to `SimState`.
 pub fn sync_physics_time(mut physics_time: ResMut<Time<Physics>>, sim_state: Res<State<SimState>>) {
     match **sim_state {
-        SimState::Running => physics_time.pause(),
-        SimState::Paused => physics_time.unpause(),
+        SimState::Running => physics_time.unpause(),
+        SimState::Paused => physics_time.pause(),
     }
 }
