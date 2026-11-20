@@ -1,13 +1,12 @@
-// TODO: Make lights scriptable in lua file
+use std::{collections::HashMap, fs};
 
-use std::collections::HashMap;
-
-use crate::{MaterialStore, aircraft::Aircraft};
 use bevy::{
     ecs::{lifecycle::HookContext, world::DeferredWorld},
     prelude::*,
 };
 use serde::Deserialize;
+
+use crate::{MaterialStore, aircraft::Aircraft};
 
 #[derive(Debug, Component, Deserialize, PartialEq, Reflect, Default)]
 #[reflect(Component, Default)]
