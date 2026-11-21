@@ -54,69 +54,50 @@ impl Light {
         mut materials: ResMut<Assets<StandardMaterial>>,
         time: Res<Time>,
     ) {
-        // TODO: Make lights actually flash
+        let t = time.elapsed_secs_f64();
         for (material_handle, light) in light_materials.iter() {
             let Some(pattern) = &lights.patterns.get(&light.name) else {
                 error!("Light {light:?} not registered in lights.toml");
                 return;
             };
 
-            let strength = match pattern {
-                PatternType::Steady => 1.0,
-                PatternType::Pattern(p) => {
-                    let total = p.get_total_secs();
-                    let cycle_time = time.elapsed_secs() % total;
-
-                    let active = p
-                        .pattern
-                        .iter()
-                        .scan(0.0_f32, |end, step| {
-                            *end += step.secs;
-                            Some((*end, step))
-                        })
-                        .find(|(end, _)| *end > cycle_time)
-                        .map(|(_, step)| step)
-                        .or(p.pattern.last());
-
-                    active.map_or(0.0, |step| match step.state {
-                        LightState::On => 1.0,
-                        LightState::Off => 0.0,
-                    })
-                }
-            };
-
             if let Some(mut material) = materials.get_mut(material_handle) {
-                material.emissive =
-                    light.colour * LIGHT_INTENSITY_FACTOR * light.intensity * strength;
+                material.emissive = light.colour
+                    * LIGHT_INTENSITY_FACTOR
+                    * light.intensity
+                    * pattern.strength_at(t);
             }
         }
     }
 
     pub fn update_lights(
         point_light_query: Query<(&mut PointLight, &Light)>,
+        lights: Single<&Lights>,
         spot_light_query: Query<(&mut SpotLight, &Light)>,
+        time: Res<Time>,
     ) {
+        let t = time.elapsed_secs_f64();
+
+        const LIGHT_INTENSITY_FACTOR: f32 = 1e8;
+
         for (mut point_light, light) in point_light_query {
-            let on = true;
+            let Some(pattern) = &lights.patterns.get(&light.name) else {
+                error!("Light {light:?} not registered in lights.toml");
+                return;
+            };
 
             point_light.color = Color::LinearRgba(light.colour);
-
-            if on {
-                point_light.intensity = light.intensity;
-            } else {
-                point_light.intensity = 0.0
-            }
+            point_light.intensity = light.intensity * pattern.strength_at(t);
         }
         for (mut spot_light, light) in spot_light_query {
-            let on = true;
+            let Some(pattern) = &lights.patterns.get(&light.name) else {
+                error!("Light {light:?} not registered in lights.toml");
+                return;
+            };
 
             spot_light.color = Color::LinearRgba(light.colour);
-
-            if on {
-                spot_light.intensity = light.intensity;
-            } else {
-                spot_light.intensity = 0.0
-            }
+            spot_light.intensity =
+                light.intensity * LIGHT_INTENSITY_FACTOR * pattern.strength_at(t);
         }
     }
 }
@@ -180,6 +161,34 @@ pub struct LightEntry {
 pub enum PatternType {
     Steady,
     Pattern(LightPattern),
+}
+impl PatternType {
+    fn strength_at(&self, elapsed_secs: f64) -> f32 {
+        let strength = match self {
+            PatternType::Steady => 1.0,
+            PatternType::Pattern(p) => {
+                let total = p.get_total_secs();
+                let cycle_time = (elapsed_secs % total as f64) as f32;
+
+                let active = p
+                    .pattern
+                    .iter()
+                    .scan(0.0_f32, |end, step| {
+                        *end += step.secs;
+                        Some((*end, step))
+                    })
+                    .find(|(end, _)| *end > cycle_time)
+                    .map(|(_, step)| step)
+                    .or(p.pattern.last());
+
+                active.map_or(0.0, |step| match step.state {
+                    LightState::On => 1.0,
+                    LightState::Off => 0.0,
+                })
+            }
+        };
+        strength
+    }
 }
 
 /// The per-aircraft component holding all lights, their names and their patterns.
