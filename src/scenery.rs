@@ -7,8 +7,11 @@ use crate::{
     ui::ChosenAircraft,
     utils::TransformLogger,
 };
-use avian_fdm::components::{AeroZone, AircraftGeometry, EngineZone, FlightState, InducedDrag};
-use avian3d::physics_transform::Position;
+use avian_fdm::components::{
+    AeroZone, AircraftGeometry, AtmosphereState, ControlInputs, EngineZone, FlightState,
+    InducedDrag,
+};
+use avian3d::{dynamics::rigid_body::RigidBody, physics_transform::Position};
 use bevy::{
     // camera_controller::free_camera::FreeCamera,
     light::{
@@ -55,7 +58,10 @@ pub fn setup_scene(
 
         let earth_medium = scattering_mediums.add(earth_medium);
         let earth_atmosphere = Atmosphere::earth(earth_medium);
-        root.spawn_spatial((earth_atmosphere.clone(), Position::new(DVec3::default())));
+        root.spawn_spatial((
+            earth_atmosphere.clone(),
+            Position::new(DVec3::ZERO)
+        ));
 
         let translation = DVec3::new(0.0, 6_361_018.0, 0.0);
         let (cell, tl) = root.grid().translation_to_grid(translation);
@@ -65,7 +71,6 @@ pub fn setup_scene(
             Position(translation),
             Transform::from_translation(tl),
             cell,
-            // TransformLogger
         ));
 
         let aircraft = chosen_aircraft.0
@@ -80,13 +85,16 @@ pub fn setup_scene(
         );
 
         let atmosphere_temperature_c = 10.0;
+
         root.spawn((
-            TransformLogger,
+            // TransformLogger,
             WorldAssetRoot(asset_server.load(GltfAssetLabel::Scene(0).from_asset(model_path))),
             Position(translation),
             FlightState::default(),
+            RigidBody::Dynamic,
             cell,
             Transform::from_translation(tl),
+            ControlInputs::default(),
             AtmosphereState {
                 temperature_k: 273.15 + atmosphere_temperature_c,
                 ..default()
