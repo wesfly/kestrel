@@ -12,7 +12,6 @@ use crate::{
         Aircraft,
         landing_gear::{LEFT_POS, LandingGearStatus, NOSEWHEEL_POS, RIGHT_POS},
     },
-    bevy_to_aerospace_coords,
 };
 
 const REST: f32 = 1.2;
@@ -64,11 +63,7 @@ pub fn spring_forces(
         return;
     }
 
-    let landing_gear = [
-        bevy_to_aerospace_coords() * LEFT_POS,
-        bevy_to_aerospace_coords() * RIGHT_POS,
-        bevy_to_aerospace_coords() * NOSEWHEEL_POS,
-    ];
+    let landing_gear = [LEFT_POS, RIGHT_POS, NOSEWHEEL_POS];
 
     let mut on_ground_vec = [false; 3];
 
