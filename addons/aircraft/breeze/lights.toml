@@ -1,0 +1,10 @@
+[lights.strobe]
+pattern = [
+  { state = "on", secs = 0.1 },
+  { state = "off", secs = 1.0 },
+  { state = "on", secs = 0.1 },
+  { state = "off", secs = 0.1 },
+]
+
+[lights.formation]
+[lights.position]
