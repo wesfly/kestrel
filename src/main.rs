@@ -190,7 +190,7 @@ fn main() {
     // Airfoils
     .register_airfoil("usa35b", usa35b())
     .register_airfoil("ag47ct02r", ag47ct02r())
-    .register_airfoil("ag47ct02r", naca0010())
+    .register_airfoil("naca0010", naca0010())
     // Systems
     .add_systems(Startup, setup)
     .add_systems(OnEnter(AppState::InGame), setup_scene)
