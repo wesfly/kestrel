@@ -79,6 +79,7 @@ pub fn setup_scene(
                 &aircraft.variant.model
         );
 
+        let atmosphere_temperature_c = 10.0;
         root.spawn((
             TransformLogger,
             WorldAssetRoot(asset_server.load(GltfAssetLabel::Scene(0).from_asset(model_path))),
@@ -86,6 +87,10 @@ pub fn setup_scene(
             FlightState::default(),
             cell,
             Transform::from_translation(tl),
+            AtmosphereState {
+                temperature_k: 273.15 + atmosphere_temperature_c,
+                ..default()
+            }
         ));
     });
 
