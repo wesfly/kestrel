@@ -225,7 +225,7 @@ fn setup(mut commands: Commands) {
     #[cfg(debug_assertions)]
     {
         commands.spawn(DiagnosticsOverlay::fps());
-        commands.spawn(DiagnosticsOverlay::mesh_and_standard_material());
+        //     commands.spawn(DiagnosticsOverlay::mesh_and_standard_material());
     }
     commands.insert_resource(MaterialStore {
         lights: StandardMaterial {
