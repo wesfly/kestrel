@@ -1,10 +1,11 @@
-/*
-I made a little flight simulator here. Check out the README for further information.
-If you have fixes or want to contribute, just make a pull request.
-
-Spatial units are in metres
-Default for speed is m/s
-*/
+//! # kestrel
+//!
+//! I made a little flight simulator here. Check out the README for further information.
+//!
+//! If you have fixes or want to contribute, read the contributing guidelines
+//! in `CONTRIBUTING.MD`.
+//! Spatial units are in metres
+//! Default for speed is m/s
 
 mod addons;
 mod aircraft;
