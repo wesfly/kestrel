@@ -266,5 +266,10 @@ impl AircraftCamera {
 
         // Focal length: 18 - 360 mm
         perspective.fov = perspective.fov.clamp(0.1, std::f32::consts::FRAC_PI_2);
+
+        // TODO: Add focal length indicator
+        // const SENSOR_WIDTH_MM: f32 = 36.0;
+        // let focal_length_mm = SENSOR_WIDTH_MM / (2.0 * (perspective.fov / 2.0).tan());
+        // info!("{focal_length_mm}");
     }
 }
