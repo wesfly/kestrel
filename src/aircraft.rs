@@ -36,6 +36,7 @@ impl Plugin for AircraftPlugin {
             FlyByWirePlugin,
             InterfacePlugin,
             SpringsPlugin,
+            lights::LightPlugin,
         ))
         .add_message::<LandingGearCommand>()
         .add_systems(Update, (update_rotors, avionics::screens::update))
