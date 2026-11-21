@@ -20,28 +20,6 @@ mod ui;
 mod utils;
 mod window;
 
-use crate::{
-    addons::AddonsPlugin,
-    aircraft::{
-        Aircraft, AircraftPlugin,
-        airfoils::{ag47ct02r, naca0010, usa35b},
-        animations::update_control_surfaces,
-    },
-    big_space_compatibility::BigSpaceCompatibilityPlugin,
-    camera::AircraftCameraPlugin,
-    input::ControlInputs,
-    physics::GravityPlugin,
-    scenery::{
-        promote_aircraft_body, setup_scene,
-        terrain::{self, TerrainCacheResource, TerrainMaterial},
-    },
-    settings::{Settings, SettingsPlugin},
-    sse::Sse,
-    time::GameTimePlugin,
-    ui::UiPlugin,
-    utils::{acceleration::point_accel, print_transforms},
-    window::cursor::CursorPlugin,
-};
 use avian_fdm::prelude::*;
 use avian3d::prelude::*;
 use bevy::{
@@ -64,6 +42,29 @@ use tokio::{runtime::Runtime, sync::Semaphore};
 
 #[cfg(debug_assertions)]
 use bevy::dev_tools::diagnostics_overlay::DiagnosticsOverlay;
+
+use crate::{
+    addons::AddonsPlugin,
+    aircraft::{
+        Aircraft, AircraftPlugin,
+        airfoils::{ag47ct02r, naca0010, usa35b},
+        animations::update_control_surfaces,
+    },
+    big_space_compatibility::BigSpaceCompatibilityPlugin,
+    camera::AircraftCameraPlugin,
+    input::ControlInputs,
+    physics::GravityPlugin,
+    scenery::{
+        promote_aircraft_body, setup_scene,
+        terrain::{self, TerrainCacheResource, TerrainMaterial},
+    },
+    settings::{Settings, SettingsPlugin},
+    sse::Sse,
+    time::GameTimePlugin,
+    ui::UiPlugin,
+    utils::{acceleration::point_accel, print_transforms},
+    window::cursor::CursorPlugin,
+};
 
 pub const METRES_TO_FEET: f32 = 3.28084;
 pub const M_S_TO_KTS: f32 = 1.943844;
