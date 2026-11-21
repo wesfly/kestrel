@@ -6,26 +6,24 @@ use bevy::{
 };
 use serde::Deserialize;
 
-use crate::{AppState, MaterialStore};
+use crate::MaterialStore;
+
+use super::Aircraft;
+
+/// This constant reduces the number users have to put into the fields in
+/// Blender because they can get high really fast.
+const LIGHT_INTENSITY_FACTOR: f32 = 1e9;
 
 pub struct LightPlugin;
 impl Plugin for LightPlugin {
     fn build(&self, app: &mut App) {
-        app.add_systems(
-            Update,
-            (
-                Light::update_mesh_lights,
-                Light::update_lights,
-                Lights::load
-                    .run_if(not(resource_exists::<Lights>))
-                    .run_if(in_state(AppState::InGame)),
-            ),
-        );
+        app.add_systems(Update, (Light::update_mesh_lights, Light::update_lights))
+            .add_systems(Update, Lights::load);
     }
 }
 
 /// Add this component to objects in Blender to mark them as lights.
-/// Their material will be overwritten.
+/// Their material will be overwritten by `on_add_use_light_material`.
 #[derive(Debug, Component, Deserialize, PartialEq, Reflect, Default)]
 #[reflect(Component, Default)]
 #[component(on_add = on_add_use_light_material)]
@@ -33,7 +31,7 @@ pub struct Light {
     state: LightState,
     name: String,
     colour: LinearRgba,
-    strength: f32,
+    intensity: f32,
 }
 
 impl Light {
@@ -51,13 +49,45 @@ impl Light {
     }
 
     pub fn update_mesh_lights(
-        material_handles: Query<(&MeshMaterial3d<StandardMaterial>, &Light)>,
+        light_materials: Query<(&MeshMaterial3d<StandardMaterial>, &Light)>,
+        lights: Single<&Lights>,
         mut materials: ResMut<Assets<StandardMaterial>>,
+        time: Res<Time>,
     ) {
-        for (material_handle, light) in material_handles.iter() {
+        // TODO: Make lights actually flash
+        for (material_handle, light) in light_materials.iter() {
+            let Some(pattern) = &lights.patterns.get(&light.name) else {
+                error!("Light {light:?} not registered in lights.toml");
+                return;
+            };
+
+            let strength = match pattern {
+                PatternType::Steady => 1.0,
+                PatternType::Pattern(p) => {
+                    let total = p.get_total_secs();
+                    let cycle_time = time.elapsed_secs() % total;
+
+                    let active = p
+                        .pattern
+                        .iter()
+                        .scan(0.0_f32, |end, step| {
+                            *end += step.secs;
+                            Some((*end, step))
+                        })
+                        .find(|(end, _)| *end > cycle_time)
+                        .map(|(_, step)| step)
+                        .or(p.pattern.last());
+
+                    active.map_or(0.0, |step| match step.state {
+                        LightState::On => 1.0,
+                        LightState::Off => 0.0,
+                    })
+                }
+            };
+
             if let Some(mut material) = materials.get_mut(material_handle) {
-                material.emissive = light.colour;
-                material.emissive_exposure_weight = light.strength;
+                material.emissive =
+                    light.colour * LIGHT_INTENSITY_FACTOR * light.intensity * strength;
             }
         }
     }
@@ -72,7 +102,7 @@ impl Light {
             point_light.color = Color::LinearRgba(light.colour);
 
             if on {
-                point_light.intensity = 10000.0;
+                point_light.intensity = light.intensity;
             } else {
                 point_light.intensity = 0.0
             }
@@ -83,7 +113,7 @@ impl Light {
             spot_light.color = Color::LinearRgba(light.colour);
 
             if on {
-                spot_light.intensity = light.strength;
+                spot_light.intensity = light.intensity;
             } else {
                 spot_light.intensity = 0.0
             }
@@ -108,21 +138,61 @@ fn on_add_use_light_material(mut world: DeferredWorld, HookContext { entity, .. 
         .insert(MeshMaterial3d(handle));
 }
 
+/// The light pattern, describing the flashing of a light. It's not defined
+/// per-component because changing the pattern would be a headache. Instead
+/// it's defined in the `lights.toml` file in every aircraft folder.
+///
+/// ## Example
+///
+/// ```toml
+/// [lights.strobe]
+/// pattern = [
+///   { state = "on", secs = 0.1 },
+///   { state = "off", secs = 1.0 },
+///   { state = "on", secs = 0.1 },
+///   { state = "off", secs = 0.1 },
+/// ]
+/// ```
 #[derive(Debug, Clone, Deserialize)]
 pub struct LightPattern {
     pub pattern: Vec<LightStep>,
 }
 
-// TODO: needs to reset between games
-#[derive(Resource)]
+impl LightPattern {
+    /// Yields the total duration of a light pattern cycle.
+    fn get_total_secs(&self) -> f32 {
+        self.pattern.iter().map(|f| f.secs).sum()
+    }
+}
+
+/// This is the struct to parse `LightSteps` from `lights.toml`. It has an
+/// optional field which makes it possible to create `Steady` lights that
+/// don't flash. If the light should be steady, just reference it like this:
+/// ```toml
+/// [lights.strobe]
+/// ```
+#[derive(Debug, Clone, Deserialize)]
+pub struct LightEntry {
+    pub pattern: Option<Vec<LightStep>>,
+}
+
+#[derive(Debug, Clone, Deserialize)]
+pub enum PatternType {
+    Steady,
+    Pattern(LightPattern),
+}
+
+/// The per-aircraft component holding all lights, their names and their patterns.
+#[derive(Component)]
 pub struct Lights {
-    pub patterns: HashMap<String, LightPattern>,
+    pub patterns: HashMap<String, PatternType>,
 }
 impl Lights {
-    pub fn load(mut commands: Commands) {
-        // TODO: stop hardcoding aircraft
-        let path = "addons/aircraft/breeze/lights.toml";
-        let Ok(text) = fs::read_to_string(path) else {
+    pub fn load(mut commands: Commands, aircraft: Single<(Entity, &Aircraft), Added<Aircraft>>) {
+        let (entity, aircraft) = *aircraft;
+
+        let path = format!("addons/aircraft/{}/lights.toml", aircraft.name);
+        let Ok(text) = fs::read_to_string(&path) else {
             error!("Couldn't find light config: {path}");
             return;
         };
@@ -135,9 +205,20 @@ impl Lights {
             }
         };
         let lights = Lights {
-            patterns: config.lights,
+            patterns: config
+                .lights
+                .into_iter()
+                .map(|(name, entry)| {
+                    let pattern = match entry.pattern {
+                        Some(steps) => PatternType::Pattern(LightPattern { pattern: steps }),
+                        None => PatternType::Steady,
+                    };
+                    (name, pattern)
+                })
+                .collect(),
         };
-        commands.insert_resource(lights);
+        info!("inserting lights");
+        commands.entity(entity).insert(lights);
     }
 }
 
@@ -149,7 +230,7 @@ pub struct LightStep {
 
 #[derive(Debug, Deserialize)]
 pub struct LightConfig {
-    pub lights: HashMap<String, LightPattern>,
+    pub lights: HashMap<String, LightEntry>,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Deserialize, Reflect, Default)]
