@@ -18,7 +18,7 @@ pub struct LightPlugin;
 impl Plugin for LightPlugin {
     fn build(&self, app: &mut App) {
         app.add_systems(Update, (Light::update_mesh_lights, Light::update_lights))
-            .add_systems(Update, Lights::load);
+            .add_observer(Lights::load);
     }
 }
 
@@ -56,7 +56,7 @@ impl Light {
     ) {
         let t = time.elapsed_secs_f64();
         for (material_handle, light) in light_materials.iter() {
-            let Some(pattern) = &lights.patterns.get(&light.name) else {
+            let Some(pattern) = &lights.0.get(&light.name) else {
                 error!("Light {light:?} not registered in lights.toml");
                 return;
             };
@@ -78,19 +78,20 @@ impl Light {
     ) {
         let t = time.elapsed_secs_f64();
 
-        const LIGHT_INTENSITY_FACTOR: f32 = 1e8;
+        const LIGHT_INTENSITY_FACTOR: f32 = 1e3;
 
         for (mut point_light, light) in point_light_query {
-            let Some(pattern) = &lights.patterns.get(&light.name) else {
+            let Some(pattern) = &lights.0.get(&light.name) else {
                 error!("Light {light:?} not registered in lights.toml");
                 return;
             };
 
             point_light.color = Color::LinearRgba(light.colour);
-            point_light.intensity = light.intensity * pattern.strength_at(t);
+            point_light.intensity =
+                light.intensity * LIGHT_INTENSITY_FACTOR * pattern.strength_at(t);
         }
         for (mut spot_light, light) in spot_light_query {
-            let Some(pattern) = &lights.patterns.get(&light.name) else {
+            let Some(pattern) = &lights.0.get(&light.name) else {
                 error!("Light {light:?} not registered in lights.toml");
                 return;
             };
@@ -134,7 +135,7 @@ fn on_add_use_light_material(mut world: DeferredWorld, HookContext { entity, .. 
 ///   { state = "off", secs = 0.1 },
 /// ]
 /// ```
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, Deserialize, Reflect)]
 pub struct LightPattern {
     pub pattern: Vec<LightStep>,
 }
@@ -157,7 +158,7 @@ pub struct LightEntry {
     pub pattern: Option<Vec<LightStep>>,
 }
 
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, Deserialize, Reflect)]
 pub enum PatternType {
     Steady,
     Pattern(LightPattern),
@@ -192,13 +193,15 @@ impl PatternType {
 }
 
 /// The per-aircraft component holding all lights, their names and their patterns.
-#[derive(Component)]
-pub struct Lights {
-    pub patterns: HashMap<String, PatternType>,
-}
+#[derive(Component, Reflect, Clone, Default, Debug)]
+pub struct Lights(HashMap<String, PatternType>);
+
 impl Lights {
-    pub fn load(mut commands: Commands, aircraft: Single<(Entity, &Aircraft), Added<Aircraft>>) {
-        let (entity, aircraft) = *aircraft;
+    pub fn load(add: On<Add<Aircraft>>, mut commands: Commands, aircraft: Query<&Aircraft>) {
+        let entity = add.entity;
+        let Ok(aircraft) = aircraft.get(entity) else {
+            return;
+        };
 
         let path = format!("addons/aircraft/{}/lights.toml", aircraft.name);
         let Ok(text) = fs::read_to_string(&path) else {
@@ -213,8 +216,8 @@ impl Lights {
                 return;
             }
         };
-        let lights = Lights {
-            patterns: config
+        let lights = Lights(
+            config
                 .lights
                 .into_iter()
                 .map(|(name, entry)| {
@@ -225,13 +228,13 @@ impl Lights {
                     (name, pattern)
                 })
                 .collect(),
-        };
-        info!("inserting lights");
+        );
+        info!("inserting lights {lights:#?}");
         commands.entity(entity).insert(lights);
     }
 }
 
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, Deserialize, Reflect)]
 pub struct LightStep {
     pub state: LightState,
     pub secs: f32,
@@ -257,5 +260,3 @@ impl LightState {
         }
     }
 }
-
-pub type LightStates = HashMap<&'static str, bool>;

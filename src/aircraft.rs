@@ -20,7 +20,7 @@ use crate::{
         damage::DamagePlugin,
         engine::Engine,
         landing_gear::{LandingGear, LandingGearCommand, LandingGearStatus},
-        lights::{Light, LightStates},
+        lights::{Light, Lights},
         rotors::update_rotors,
         springs::SpringsPlugin,
     },
@@ -75,12 +75,12 @@ pub struct Aircraft {
     pub systems: Systems,
 }
 
-#[derive(Clone, Reflect)]
+#[derive(Clone, Reflect, Default)]
 pub struct Systems {
     pub parking_brake: bool,
     /// 0.0 to 1.0
     pub wheel_brake: f32,
-    pub lights: LightStates,
+    pub lights: Lights,
 }
 
 impl Default for Aircraft {
@@ -100,7 +100,7 @@ impl Default for Aircraft {
             systems: Systems {
                 parking_brake: false,
                 wheel_brake: 0.0,
-                lights: LightStates::default(),
+                lights: Lights::default(),
             },
         }
     }
