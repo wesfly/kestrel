@@ -57,7 +57,7 @@ impl Light {
         let t = time.elapsed_secs_f64();
         for (material_handle, light) in light_materials.iter() {
             let Some(pattern) = &lights.0.get(&light.name) else {
-                error!("Light {light:?} not registered in lights.toml");
+                error!("Light {:?} not registered in lights.toml", light.name);
                 return;
             };
 
