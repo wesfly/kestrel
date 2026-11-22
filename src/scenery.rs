@@ -1,11 +1,11 @@
 use crate::{
     CELL_SIZE, Settings,
     addons::Addons,
-    aircraft::Aircraft,
+    aircraft::{Aircraft, control_surfaces::ControlSurfacesDeflection},
     camera::AircraftCamera,
     scenery::terrain::{TerrainCacheResource, TerrainChunkRegistry},
     ui::ChosenAircraft,
-    utils::TransformLogger,
+    utils::{Coord, TransformLogger},
 };
 use avian_fdm::components::{
     AeroZone, AircraftGeometry, AtmosphereState, ControlInputs, EngineZone, FlightState,
@@ -95,6 +95,15 @@ pub fn setup_scene(
             cell,
             Transform::from_translation(tl),
             ControlInputs::default(),
+            Aircraft {
+                name: aircraft.config.general.name,
+                variant: aircraft.variant.name,
+                coord: Coord::default(),
+                control_surfaces: ControlSurfacesDeflection::default(),
+                landing_gear: crate::aircraft::landing_gear::LandingGearStatus::Retracted,
+                on_ground: false,
+                systems: super::aircraft::Systems::default(),
+            },
             AtmosphereState {
                 temperature_k: 273.15 + atmosphere_temperature_c,
                 ..default()
