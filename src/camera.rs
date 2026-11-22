@@ -175,7 +175,6 @@ impl AircraftCamera {
         let Some((cam_pos, cam_rot, _cam_tf, cam_tl)) =
             camera_positions.0.get_mut(current_view.0 as usize)
         else {
-            error!("Expected aircraft to have camera positions");
             return;
         };
 
