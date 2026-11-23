@@ -51,7 +51,7 @@ use crate::{
         airfoils::{ag47ct02r, naca0010, usa35b},
         animations::update_control_surfaces,
     },
-    big_space_compatibility::BigSpaceCompatibilityPlugin,
+    big_space_compatibility::{BigSpaceCompatibilityPlugin, CELL_SIZE},
     camera::AircraftCameraPlugin,
     input::ControlInputs,
     physics::GravityPlugin,
@@ -70,7 +70,6 @@ use crate::{
 pub const METRES_TO_FEET: f32 = 3.28084;
 pub const M_S_TO_KTS: f32 = 1.943844;
 pub const EARTH_RADIUS: f32 = 6_360_000.0;
-pub const G: f32 = -9.81;
 
 #[derive(States, Clone, PartialEq, Eq, Hash, Debug, Default)]
 pub enum AppState {
@@ -232,8 +231,6 @@ fn setup(mut commands: Commands) {
         },
     });
 }
-
-pub const CELL_SIZE: f64 = 500.0;
 
 pub fn absolute_position(cell: &CellCoord, local_translation: Vec3) -> DVec3 {
     DVec3::new(cell.x as f64, cell.y as f64, cell.z as f64) * CELL_SIZE as f64
