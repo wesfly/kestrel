@@ -95,6 +95,7 @@ pub fn setup_scene(
             cell,
             Transform::from_translation(tl),
             ControlInputs::default(),
+            PlanetGravity,
             Aircraft {
                 name: aircraft.config.general.name,
                 variant: aircraft.variant.name,
