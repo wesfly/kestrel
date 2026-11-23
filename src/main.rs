@@ -206,7 +206,6 @@ fn main() {
     .add_systems(
         FixedUpdate,
         (
-            physics::planet_gravity,
             update_control_surfaces,
             window::screenshot_saving,
             physics::sync_physics_time,
