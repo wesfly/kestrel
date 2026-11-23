@@ -9,7 +9,7 @@ use crate::{
 };
 use avian_fdm::components::{
     AeroZone, AircraftGeometry, AtmosphereState, ControlInputs, EngineZone, FlightState,
-    InducedDrag,
+    InducedDrag, PlanetGravity,
 };
 use avian3d::{dynamics::rigid_body::RigidBody, physics_transform::Position};
 use bevy::{
