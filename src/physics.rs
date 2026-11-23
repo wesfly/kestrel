@@ -1,10 +1,6 @@
 use avian_fdm::components::PlanetResource;
 use avian3d::{
-    dynamics::{
-        integrator::Gravity,
-        rigid_body::forces::{Forces, WriteRigidBodyForces},
-    },
-    physics_transform::Position,
+    dynamics::integrator::Gravity,
     schedule::{Physics, PhysicsTime},
 };
 use bevy::{math::DVec3, prelude::*};
@@ -18,17 +14,8 @@ impl Plugin for GravityPlugin {
             .insert_resource(PlanetResource {
                 center: DVec3::ZERO,
                 radius_m: EARTH_RADIUS as f64,
-            })
-            .add_systems(Update, planet_gravity.run_if(in_state(SimState::Running)));
-    }
-}
-
-pub fn planet_gravity(mut query: Query<(Forces, &Position)>) {
-    let planet_center = Vec3::new(0.0, 0.0, 0.0);
-    for (mut forces, position) in &mut query {
-        let to_center = planet_center - position.0.as_vec3();
-        let direction = to_center.normalize_or_zero();
-        forces.apply_linear_acceleration(direction * 9.81);
+                surface_gravity_ms2: crate::G,
+            });
     }
 }
 
