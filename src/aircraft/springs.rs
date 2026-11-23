@@ -7,11 +7,11 @@ use bevy::prelude::*;
 use std::ops::DerefMut;
 
 use crate::{
-    G,
     aircraft::{
         Aircraft,
         landing_gear::{LEFT_POS, LandingGearStatus, NOSEWHEEL_POS, RIGHT_POS},
     },
+    physics::G,
 };
 
 const REST: f32 = 1.2;
@@ -111,7 +111,7 @@ pub fn spring_forces(
         let vel_at_contact_point = force.velocity_at_point(contact_point);
         let steering_vel = steering_dir.dot(vel_at_contact_point);
 
-        let effective_mass = normal_load / G as f32;
+        let effective_mass = normal_load / -G as f32;
         let desired_lateral_accel = -steering_vel / TIRE_RELAXATION_TIME;
         let max_lateral_force = normal_load * MU_LATERAL;
         let lateral_force = (effective_mass * desired_lateral_accel * steering_dir)
