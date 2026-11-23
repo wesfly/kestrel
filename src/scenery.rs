@@ -42,7 +42,7 @@ pub fn setup_scene(
     info!("Spawning scene");
 
     commands.spawn_big_space(Grid::new(CELL_SIZE as f32, 10.0), |root| {
-        root.insert(Visibility::default());
+        root.insert((Visibility::default(), DespawnOnExit(AppState::InGame)));
         let mut earth_medium = ScatteringMedium::earth(256, 256);
         let atmosphere_height = 60_000.0;
 
@@ -130,6 +130,7 @@ pub fn setup_scene(
             illuminance: lux::RAW_SUNLIGHT,
             ..default()
         },
+        DespawnOnExit(AppState::InGame),
         Transform::from_translation(sun_position).looking_at(Vec3::ZERO, Vec3::Y),
         cascade,
     ));
