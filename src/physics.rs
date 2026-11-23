@@ -7,6 +7,8 @@ use bevy::{math::DVec3, prelude::*};
 
 use crate::{EARTH_RADIUS, SimState};
 
+pub const G: f32 = 9.81;
+
 pub struct GravityPlugin;
 impl Plugin for GravityPlugin {
     fn build(&self, app: &mut App) {
@@ -14,7 +16,7 @@ impl Plugin for GravityPlugin {
             .insert_resource(PlanetResource {
                 center: DVec3::ZERO,
                 radius_m: EARTH_RADIUS as f64,
-                surface_gravity_ms2: crate::G,
+                surface_gravity_ms2: G,
             });
     }
 }
