@@ -10,7 +10,7 @@ license-file = "LICENSE.md"
 avian_fdm = {
   git = "https://github.com/viccuad/avian_fdm.git",
   default-features = false,
-  features = ["f64", "parry-f64"]
+  features = ["f64", "parry-f64", "debug-plugin"]
 }
 avian3d = {
   version = "0.8.0",
