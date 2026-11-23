@@ -28,7 +28,7 @@ const BORDER: UiRect = UiRect::all(Val::Px(2.0));
 const BACKGROUND_COLOUR: Color = Color::WHITE;
 
 #[derive(Component, Clone, Default)]
-struct LocationSelector(Coord);
+pub struct LocationSelector(pub Coord);
 
 #[derive(Component, Default, Clone)]
 pub struct Menu;

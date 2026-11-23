@@ -3,9 +3,11 @@ use crate::{
     addons::Addons,
     aircraft::{Aircraft, control_surfaces::ControlSurfacesDeflection},
     camera::AircraftCamera,
-    scenery::terrain::{TerrainCacheResource, TerrainChunkRegistry},
-    ui::ChosenAircraft,
-    utils::{Coord, TransformLogger},
+    scenery::terrain::{
+        TerrainCacheResource, TerrainChunkRegistry, coord_to_pos, coord_to_world_pos,
+    },
+    ui::{ChosenAircraft, LocationSelector},
+    utils::Coord,
 };
 use avian_fdm::components::{
     AeroZone, AircraftGeometry, AtmosphereState, ControlInputs, EngineZone, FlightState,
@@ -13,7 +15,6 @@ use avian_fdm::components::{
 };
 use avian3d::{dynamics::rigid_body::RigidBody, physics_transform::Position};
 use bevy::{
-    // camera_controller::free_camera::FreeCamera,
     light::{
         Atmosphere, CascadeShadowConfigBuilder,
         atmosphere::{Falloff, ScatteringMedium, ScatteringTerm},
@@ -21,6 +22,7 @@ use bevy::{
     },
     math::DVec3,
     prelude::*,
+    ui::Selected,
 };
 use big_space::prelude::*;
 
@@ -34,12 +36,11 @@ pub fn setup_scene(
     mut terrain_tile_cache: ResMut<TerrainCacheResource>,
     mut terrain_registry: ResMut<TerrainChunkRegistry>,
     chosen_aircraft: Res<ChosenAircraft>,
+    location_selector: Single<&LocationSelector, With<Selected>>,
 ) {
     // Init/Reset tile cache
     *terrain_tile_cache = TerrainCacheResource::default();
     *terrain_registry = TerrainChunkRegistry::default();
-
-    info!("Spawning scene");
 
     commands.spawn_big_space(Grid::new(CELL_SIZE as f32, 10.0), |root| {
         root.insert((Visibility::default(), DespawnOnExit(AppState::InGame)));

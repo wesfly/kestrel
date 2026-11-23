@@ -9,7 +9,7 @@ mod hud;
 mod menu;
 pub mod notifications;
 
-pub use menu::ChosenAircraft;
+pub use menu::{ChosenAircraft, LocationSelector};
 
 pub const UI_SCALE: f32 = 1.0;
 
