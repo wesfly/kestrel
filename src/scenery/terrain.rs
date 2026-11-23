@@ -1,4 +1,18 @@
-use crate::{EARTH_RADIUS, TOKIO_RUNTIME, absolute_position, utils::Coord};
+//! # Terrain Logic
+// TODO: Split up
+// TODO: If spawning two times at the same point, the terrain doesn't load
+// the second time
+
+use std::fs::File;
+use std::{
+    collections::{HashMap, HashSet},
+    f32::consts::PI,
+    io::Write,
+    path::Path,
+    sync::Arc,
+    time::{Duration, Instant},
+};
+
 use avian3d::prelude::*;
 use bevy::{
     asset::RenderAssetUsages,
@@ -18,16 +32,9 @@ use dashmap::DashMap;
 pub use material::TerrainMaterial;
 use reqwest::Client;
 use serde::Deserialize;
-use std::fs::File;
-use std::{
-    collections::{HashMap, HashSet},
-    f32::consts::PI,
-    io::Write,
-    path::Path,
-    sync::Arc,
-    time::{Duration, Instant},
-};
 use tokio::sync::{OnceCell, Semaphore};
+
+use crate::{AppState, EARTH_RADIUS, TOKIO_RUNTIME, absolute_position, utils::Coord};
 
 mod material;
 
@@ -1101,6 +1108,7 @@ pub fn poll_terrain(
                     .spawn((
                         TerrainFaces,
                         Mesh3d(meshes.add(earth_mesh)),
+                        DespawnOnExit(AppState::InGame),
                         RigidBody::Static,
                         collider,
                         MeshMaterial3d(
