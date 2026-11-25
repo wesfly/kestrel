@@ -14,7 +14,6 @@ likelyhood of confusion with a file system crate.
   continuously updating quadtree
 - 3D cockpits with clickable buttons and screens displaying flight information
 - A settings file - `settings.toml`
-- 3 aircraft to fly all around the world
 - A round earth with variable sun positions
 
 ## Preview
