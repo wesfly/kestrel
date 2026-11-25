@@ -422,6 +422,6 @@ impl Menu {
         commands.spawn_scene(ui_root(addons));
 
         // Spawn menu camera
-        commands.spawn((Camera2d::default(), DespawnOnEnter(AppState::InGame)));
+        commands.spawn((Camera2d::default(), DespawnOnExit(AppState::Menu)));
     }
 }
