@@ -76,7 +76,7 @@ Press `P` to unpause the sim.
 
 - `F3` to take a screenshot (output: `screenshots/user`)
 - `ESC` to return to menu
-- `HJKL` to control the sun position
+- `HJKL` to control the time of day
 
 ### Camera
 
