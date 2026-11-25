@@ -2,12 +2,8 @@
 
 This is a little flight sim made in Bevy using Rust.
 
-This project is formerly known as `bevy_fs`, but it was renamed due to
-likelyhood of confusion with a file system crate.
-
 ## Highlights
 
-- Support for both keyboard and gamepad (gamepad is recommended)
 - Collisions using `avian3d` and the flight dynamics model crate
   [`avian_fdm`](https://github.com/viccuad/avian_fdm)
 - Terrain with real-world elevation data (down to 1m precision), and a
@@ -86,7 +82,7 @@ Press `P` to unpause the sim.
 ### Aircraft
 
 - `M` to toggle engine
-- `G` to raise or lower landing gear
+- `G` to toggle landing gear
 - `Z` to brake
 - `=` to toggle parking brake
 - `1` for position lights
