@@ -81,7 +81,7 @@ Press `P` to unpause the sim.
 ### Camera
 
 - `RMB + drag` to orbit camera
-- `C` to switch the camera view
+- `F5` and `F6` to switch the camera view
 - Mouse wheel to zoom camera
 - `R` to reset camera
 
