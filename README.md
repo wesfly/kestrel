@@ -66,12 +66,6 @@ that not everywhere a zoom of 15 is available, but 12 is a safe zoom to use in
 any location. You can find more about the zoom levels in different regions here:
 <https://mapterhorn.com/coverage>.
 
-## Buildings
-
-Buildings are still an experimental feature, mainly due to the (sometimes
-severe) frame rate losses. Some cities like Jakarta, Indonesia may freeze the
-simulator. Consider this implementation a temporary solution.
-
 ## Controls
 
 ### Pause
