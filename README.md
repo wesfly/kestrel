@@ -14,7 +14,7 @@ likelyhood of confusion with a file system crate.
   continuously updating quadtree
 - 3D cockpits with clickable buttons and screens displaying flight information
 - A settings file - `settings.toml`
-- A round earth with variable sun positions
+- A round earth with variable sun positions based on time of day
 
 ## Preview
 
@@ -28,7 +28,6 @@ likelyhood of confusion with a file system crate.
 - [Fluxer](https://fluxer.gg/hDS7y2y7)
 
 ## Run
-
 
 ### Using a precompiled binary
 
