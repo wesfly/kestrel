@@ -143,8 +143,15 @@ pub struct Addons {
 
 impl Addons {
     fn init() -> Addons {
-        let aircraft = load_aircraft_configs(AIRCRAFT_DIR).unwrap();
-        Addons { aircraft }
+        match load_aircraft_configs(AIRCRAFT_DIR) {
+            Ok(aircraft) => return Addons { aircraft },
+            Err(e) => {
+                error!("Error loading aircraft configs: {e}.");
+                return Addons {
+                    aircraft: Vec::new(),
+                };
+            }
+        }
     }
 
     pub fn get_asset_path(aircraft_name: &str, variant: &str) -> AssetPath<'static> {
