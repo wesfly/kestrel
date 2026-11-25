@@ -69,13 +69,20 @@ pub struct GameTime {
 }
 
 impl GameTime {
-    // TODO: Make change frame rate independent
-    pub fn change_manually(mut time: ResMut<GameTime>, keys: Res<ButtonInput<KeyCode>>) {
+    pub fn change_manually(
+        mut time: ResMut<GameTime>,
+        keys: Res<ButtonInput<KeyCode>>,
+        d_time: Res<Time>,
+    ) {
+        let delta = d_time.delta_secs_f64();
+        const SENSIBILITY: f64 = 0.05;
         if keys.pressed(KeyCode::KeyH) {
-            time.utc = time.utc.checked_sub_signed(TimeDelta::days(1)).unwrap();
+            let s = (60.0 * 60.0 * 24.0 * delta * SENSIBILITY) as i64;
+            time.utc = time.utc.checked_add_signed(TimeDelta::seconds(s)).unwrap();
         }
         if keys.pressed(KeyCode::KeyJ) {
-            time.utc = time.utc.checked_sub_signed(TimeDelta::days(-1)).unwrap();
+            let s = (60.0 * 60.0 * 24.0 * delta * SENSIBILITY) as i64;
+            time.utc = time.utc.checked_sub_signed(TimeDelta::seconds(s)).unwrap();
         }
         if keys.pressed(KeyCode::KeyK) {
             time.utc = time.utc.checked_sub_signed(TimeDelta::minutes(2)).unwrap();
