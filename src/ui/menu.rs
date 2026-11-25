@@ -398,7 +398,7 @@ fn fly_button() -> impl Scene {
                 settings.terrain.coord = loc_sel.0;
             }
 
-            next_app_state.set(AppState::InGame);
+            next_app_state.set(AppState::Loading);
         })
         Children [
             Node {
@@ -422,6 +422,6 @@ impl Menu {
         commands.spawn_scene(ui_root(addons));
 
         // Spawn menu camera
-        commands.spawn((Camera2d::default(), DespawnOnExit(AppState::Menu)));
+        commands.spawn((Camera2d::default(), DespawnOnEnter(AppState::InGame)));
     }
 }

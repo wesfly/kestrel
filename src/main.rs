@@ -189,7 +189,7 @@ fn main() {
     .register_airfoil("naca0010", naca0010())
     // Systems
     .add_systems(Startup, setup)
-    .add_systems(OnEnter(AppState::InGame), setup_scene)
+    .add_systems(OnEnter(AppState::Loading), setup_scene)
     .add_systems(
         Update,
         (

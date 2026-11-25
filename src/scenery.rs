@@ -6,7 +6,7 @@ use crate::{
     scenery::terrain::{
         TerrainCacheResource, TerrainChunkRegistry, coord_to_pos, coord_to_world_pos,
     },
-    ui::{ChosenAircraft, LocationSelector},
+    ui::ChosenAircraft,
     utils::Coord,
 };
 use avian_fdm::components::{
@@ -22,7 +22,6 @@ use bevy::{
     },
     math::DVec3,
     prelude::*,
-    ui::Selected,
 };
 use big_space::prelude::*;
 
@@ -36,7 +35,7 @@ pub fn setup_scene(
     mut terrain_tile_cache: ResMut<TerrainCacheResource>,
     mut terrain_registry: ResMut<TerrainChunkRegistry>,
     chosen_aircraft: Res<ChosenAircraft>,
-    location_selector: Single<&LocationSelector, With<Selected>>,
+    mut next_app_state: ResMut<NextState<AppState>>,
 ) {
     // Init/Reset tile cache
     *terrain_tile_cache = TerrainCacheResource::default();
@@ -64,7 +63,10 @@ pub fn setup_scene(
             Position::new(DVec3::ZERO)
         ));
 
-        let translation = DVec3::new(0.0, 6_361_018.0, 0.0);
+        let coord = settings.terrain.coord;
+        let altitude = 100.0;
+
+        let translation = coord_to_world_pos(coord) + (coord_to_pos(coord) * altitude).as_dvec3();
         let (cell, tl) = root.grid().translation_to_grid(translation);
 
         root.spawn((
@@ -135,6 +137,8 @@ pub fn setup_scene(
         Transform::from_translation(sun_position).looking_at(Vec3::ZERO, Vec3::Y),
         cascade,
     ));
+
+    next_app_state.set(AppState::InGame);
 }
 
 pub fn promote_aircraft_body(
